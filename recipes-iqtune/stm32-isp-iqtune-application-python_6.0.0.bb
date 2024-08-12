@@ -11,7 +11,7 @@ LICENSE:${PN} = "SLA0044"
 
 inherit python3-dir
 
-DEPENDS += " linux-stm32mp"
+DEPENDS += " linux-stm32mp gstreamer1.0-plugins-bad"
 
 SRC_URI  = " file://stm32-isp-iqtune-application;subdir=sources "
 SRC_URI += " file://resources;subdir=sources "
@@ -72,6 +72,27 @@ python populate_packages:prepend () {
     pn = d.getVar('PN')
     rdepends = d.getVar('RDEPENDS:' + pn)
     rdepends = rdepends + " kernel-module-videobuf2-dma-sg-%s (>= %s-%s) " % (kernel_version, pkgv, pr)
+    d.setVar('RDEPENDS:' + pn, rdepends)
+
+    # get the recipe version of gstreamer1.0-plugins-bad-uvcgadget
+    file = os.path.join(pkgdata_dir, 'runtime', 'gstreamer1.0-plugins-bad-uvcgadget')
+
+    if not file:
+        bb.fatal("No files found matching pattern: {}".format(file_pattern))
+
+    pkgv = None
+    pr = None
+    with open(file, 'r') as f:
+        for line in f:
+            if line.startswith('PKGV:'):
+                pkgv = line.split(':')[1].strip()
+            elif line.startswith('PR:'):
+                pr = line.split(':')[1].strip()
+
+    # update the RDEPENDS with the gstreamer1.0-plugins-bad-uvcgadget version
+    pn = d.getVar('PN')
+    rdepends = d.getVar('RDEPENDS:' + pn)
+    rdepends = rdepends + " gstreamer1.0-plugins-bad-uvcgadget (>= %s-%s) " % (pkgv, pr)
     d.setVar('RDEPENDS:' + pn, rdepends)
 }
 
