@@ -1,0 +1,12 @@
+Application:
+    Name: Camera
+    Description: ISP preview
+    Icon: ../x-linux-isp/simple-isp-preview/resources/camera_lens_200x200.png
+    Board:
+        List: all
+    Type: script
+    Script:
+        Start: ../x-linux-isp/simple-isp-preview/launch_python_simple_isp_preview_app.sh
+    Action:
+        button_release_event: script_management
+        button_press_event: highlight_eventBox

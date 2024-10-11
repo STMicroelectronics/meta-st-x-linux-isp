@@ -1,0 +1,57 @@
+From 7acdee71472effb1b7d9fd00296ebc54a8b9fa81 Mon Sep 17 00:00:00 2001
+From: Vincent ABRIOU <vincent.abriou@st.com>
+Date: Thu, 26 Sep 2024 12:57:37 +0200
+Subject: [PATCH 1/7] stm32-dcmipp: enable/disable demosaicing block via
+ isp-params interface
+
+Change-Id: I0b448d2af11c945da91fb45461065c2d83c98a15
+Signed-off-by: Vincent ABRIOU <vincent.abriou@st.com>
+---
+ .../media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c  | 4 +++-
+ include/uapi/linux/stm32-dcmipp-config.h                      | 2 ++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c b/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c
+index 623403c6cc80..5f10d6153231 100644
+--- a/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c
++++ b/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c
+@@ -299,6 +299,7 @@ dcmipp_isp_params_apply_ex(struct dcmipp_isp_params_device *vout,
+ }
+ 
+ #define DCMIPP_P1DMCR (0x870)
++#define DCMIPP_P1DMCR_ENABLE BIT(0)
+ #define DCMIPP_P1DMCR_PEAK_SHIFT 16
+ #define DCMIPP_P1DMCR_PEAK_MASK 0x07
+ #define DCMIPP_P1DMCR_LINEV_SHIFT 20
+@@ -331,7 +332,8 @@ dcmipp_isp_params_apply_dm(struct dcmipp_isp_params_device *vout,
+ 	       DCMIPP_P1DMCR_EDGE_MASK << DCMIPP_P1DMCR_EDGE_SHIFT;
+ 
+ 	dmcr = reg_read(vout, DCMIPP_P1DMCR) & ~mask;
+-	reg_write(vout, DCMIPP_P1DMCR, dmcr |
++	reg_write(vout, DCMIPP_P1DMCR, dmcr & ~DCMIPP_P1DMCR_ENABLE |
++		  (cfg->en ? DCMIPP_P1DMCR_ENABLE : 0) |
+ 		  cfg->peak << DCMIPP_P1DMCR_PEAK_SHIFT |
+ 		  cfg->lineh << DCMIPP_P1DMCR_LINEH_SHIFT |
+ 		  cfg->linev << DCMIPP_P1DMCR_LINEV_SHIFT |
+diff --git a/include/uapi/linux/stm32-dcmipp-config.h b/include/uapi/linux/stm32-dcmipp-config.h
+index af80b3b3a258..85b4cf731192 100644
+--- a/include/uapi/linux/stm32-dcmipp-config.h
++++ b/include/uapi/linux/stm32-dcmipp-config.h
+@@ -72,12 +72,14 @@ struct stm32_dcmipp_isp_ex_cfg {
+ /**
+  * struct stm32_dcmipp_isp_dm_cfg - STM32 DCMIPP ISP demosaicing filters
+  *
++ * @en: enable / disable the demosaicing block
+  * @edge: strength of the edge detection
+  * @lineh: strength of the horizontal line detection
+  * @linev: strength of the vertical line detection
+  * @peak: strength of the peak detection
+  */
+ struct stm32_dcmipp_isp_dm_cfg {
++	__u32 en;
+ 	__u8 edge;
+ 	__u8 lineh;
+ 	__u8 linev;
+-- 
+2.25.1
+

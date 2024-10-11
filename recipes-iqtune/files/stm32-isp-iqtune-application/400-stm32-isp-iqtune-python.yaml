@@ -1,0 +1,12 @@
+Application:
+    Name: STM32 ISP IQTune
+    Description: Sensor tuning app
+    Icon: ../x-linux-isp/stm32-isp-iqtune-app/resources/ISP_Tool_200x200.png
+    Board:
+        List: all
+    Type: script
+    Script:
+        Start: ../x-linux-isp/stm32-isp-iqtune-app/launch_python_IQTune_app.sh
+    Action:
+        button_release_event: script_management
+        button_press_event: highlight_eventBox
