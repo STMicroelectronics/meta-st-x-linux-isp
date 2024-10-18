@@ -148,7 +148,7 @@ typedef struct evision_st_ae_process_t {
 } evision_st_ae_process_t;
 
 /* Exported constants --------------------------------------------------------*/
-#define EVISION_ST_AEC_LUM_TARGET               56      /* Default luminance value targetted by the AE algorithm */
+#define EVISION_ST_AEC_LUM_TARGET               56      /* Default luminance value targeted by the AE algorithm */
 #define EVISION_ST_AEC_TOLERANCE                10      /* Max delta between lum stat and target in convergence region */
 #define EVISION_ST_AEC_GAIN_INCREMENT_COEFF     100     /* Factor applied to increment gain update */
 #define EVISION_ST_AEC_GAIN_LOW_DELTA           45      /* Max delta value between lum stat and target in low delta region */

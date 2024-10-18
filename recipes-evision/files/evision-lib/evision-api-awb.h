@@ -135,14 +135,14 @@ typedef struct evision_awb_profile {
     /*! @brief
      * The ISP color correction matrix coefficients. <br/>
      * <b>Note:</b> The individual color correction matrix coefficients are stored using the float type.
-     * The coefficients can be stored as ratios or as a flaoting point representation of integer values.
+     * The coefficients can be stored as ratios or as a floating point representation of integer values.
      * It is up to the user to convert the values to the format expected by the sensor/ISP.
      */
     float ccm_coefficients[EVISION_AWB_CCM_SIZE][EVISION_AWB_CCM_SIZE];
     /*! @brief
      * The ISP color correction matrix offset coefficients. <br/>
      * <b>Note:</b> The individual color correction matrix offset coefficients are stored using the float type.
-     * The coefficients can be stored as ratios or as a flaoting point representation of integer values.
+     * The coefficients can be stored as ratios or as a floating point representation of integer values.
      * It is up to the user to convert the values to the format expected by the sensor/ISP.
      */
     float ccm_offsets[EVISION_AWB_CCM_SIZE];
@@ -156,7 +156,7 @@ typedef struct evision_awb_profile {
  * @brief Sensor specific AWB calibration data, member of #evision_awb_estimator_t.
  *
  * Contains sensor specific AWB calibration data for accurate color rendering.
- * Support for both continous AWB and profile selection based AWB.
+ * Support for both continious AWB and profile selection based AWB.
  *
  */
 typedef struct evision_awb_calib_data {
@@ -454,7 +454,7 @@ void evision_api_awb_set_profile(evision_awb_profile_t* awb_profile,
  * The choice of the actual number of profiles and the color temperature of the illumination for each profile is
  * generally dependent on the intended application and/or the available hardware equipement for generating the calibration data.
  * They must be complete in the sense that they must contain all the required fields (channel gains and color correction coefficients).
- * It is the user's responsability to ensure that this is indeed the case.
+ * It is the user's responsibility to ensure that this is indeed the case.
  *
  * The decision thresholds must be unique and specified in ascending order.
  * Between each pair of adjacent profiles there must be exactly one decision threshold.
