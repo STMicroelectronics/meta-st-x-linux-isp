@@ -50,6 +50,8 @@ class CmdID(Enum):
   CMD_GAMMA               = 0x17
   CMD_SENSORINFO          = 0x18
   CMD_SENSORTESTPATTERN   = 0x19
+  CMD_SENSORDELAY         = 0x1A
+  CMD_SENSORDELAYMEASURE  = 0x1B
 #Application API commands for test purpose
   CMD_USER_EXPOSURETARGET = 0x80
   CMD_USER_LISTWBREFMODES = 0x81
@@ -294,6 +296,11 @@ class IQTuneCom():
 
         elif cmd == CmdID.CMD_SENSORTESTPATTERN.value:
             print("CMD_SENSORTESTPATTERN")
+
+        elif cmd == CmdID.CMD_SENSORDELAY.value:
+            # retrieve values from the command
+            val = unpack('<1I', data[4:8])[0]
+            self._app.gst_widget.set_libcamera_property('sensor-delay', val)
 
         else:
             print("Unkown set config command (" + str(cmd) + ")")
@@ -568,6 +575,32 @@ class IQTuneCom():
 
         elif cmd == CmdID.CMD_SENSORTESTPATTERN.value:
             print("CMD_SENSORTESTPATTERN")
+
+        elif cmd == CmdID.CMD_SENSORDELAY.value:
+            val = self._app.gst_widget.get_libcamera_property('sensor-delay')
+            read_values = pack('<I', val)
+
+        elif cmd == CmdID.CMD_SENSORDELAYMEASURE.value:
+            # disable AWB to avoid interference
+            prev_awb_enable = self._app.gst_widget.get_libcamera_property('awb-algo-enable')
+            self._app.gst_widget.set_libcamera_property('awb-algo-enable', False)
+
+            # trigger the start of the measure
+            self._app.gst_widget.set_libcamera_property('do-sensor-delay-measure', True)
+
+            # wait until the reported mesaure is available (i.e. not -1)
+            val = -1
+            max_attempt = 100
+            while val == -1 and max_attempt:
+                time.sleep(0.1)
+                max_attempt -= 1
+                val = self._app.gst_widget.get_libcamera_property('sensor-delay-measure')
+
+            read_values = pack('<I', val if val > 0 else 0)
+
+            # restore AWB
+            self._app.gst_widget.set_libcamera_property('awb-algo-enable', prev_awb_enable)
+
         else:
             print("Unkown get config command (" + str(cmd) + ")")
             ret = 1
