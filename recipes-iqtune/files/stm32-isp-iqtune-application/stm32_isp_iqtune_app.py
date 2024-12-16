@@ -639,6 +639,10 @@ class Application:
                         self.sensor_gain_min = int(float(match.group(1))) * 1000 # mdB
                         self.sensor_gain_max = int(float(match.group(2))) * 1000 # mdB
 
+            # Linux kernel 6.6 workaround. IMX335 driver declares height = 1944 but supports only 1940. This shall be fixed in kernel 6.10
+            if self.sensor_name == "imx335" and self.sensor_height == 1944:
+                self.sensor_height = 1940
+
             # remove the temporary file
             os.remove(tmp_file)
 
