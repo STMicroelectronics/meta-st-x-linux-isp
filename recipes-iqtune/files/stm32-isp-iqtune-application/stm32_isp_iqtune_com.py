@@ -52,6 +52,7 @@ class CmdID(Enum):
   CMD_SENSORTESTPATTERN   = 0x19
   CMD_SENSORDELAY         = 0x1A
   CMD_SENSORDELAYMEASURE  = 0x1B
+  CMD_FIRMWARE_CONFIG     = 0x1C
 #Application API commands for test purpose
   CMD_USER_EXPOSURETARGET = 0x80
   CMD_USER_LISTWBREFMODES = 0x81
@@ -600,6 +601,26 @@ class IQTuneCom():
 
             # restore AWB
             self._app.gst_widget.set_libcamera_property('awb-algo-enable', prev_awb_enable)
+
+        elif cmd == CmdID.CMD_FIRMWARE_CONFIG.value:
+            read_values = b''
+            # Number of supported fields (RGBOrder, HasStatRemoval, etc..).
+            nb_field = 6
+            read_values = read_values + pack('<I', nb_field)
+            # 01 - RGBOrder (RGB = 0x00 (From DV6) -  BGR = 0x01 (DV5))
+            rgb_order = 0x01 if self._app.ostl_version == "5.0" else 0x00
+            read_values = read_values + pack('<I', rgb_order)
+            # 02 - HasStatRemoval. Not supported.
+            read_values = read_values + pack('<I', False)
+            # 03 - HasGamma. Not supported.
+            read_values = read_values + pack('<I', False)
+            # 04 - HasAntiFlicker. Not supported for the time being.
+            read_values = read_values + pack('<I', False)
+            # 05 - DeviceId (N6=0x00  -  MP25=0x01 ...   0xFFFFFF = unknown)
+            device = 0x01 if self._app.device.startswith("STM32MP25") else 0xFFFFFFFF
+            read_values = read_values + pack('<I', device)
+            # 06 - UID
+            read_values = read_values + self._app.uid[0] + self._app.uid[1] + self._app.uid[2]
 
         else:
             print("Unkown get config command (" + str(cmd) + ")")

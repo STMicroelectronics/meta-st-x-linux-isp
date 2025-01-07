@@ -582,6 +582,10 @@ class Application:
         self.sensor_expo_max = None
         self.sensor_gain_min = None
         self.sensor_gain_max = None
+        self.ostl_version = None
+        self.device = None
+        self.uid = [None, None, None]
+        self.get_board_info()
         self.get_sensor_information()
         self.get_display_resolution()
 
@@ -594,6 +598,37 @@ class Application:
         #instantiate the overlay window
         self.overlay_window = OverlayWindow(self)
         self.show_all()
+
+    def get_board_info(self):
+        #Get OSTL version (eg "5.0")
+        command = r"cat /etc/apt/sources.*/packages.* | grep -oP '(?<=packages.openstlinux.st.com/)\d+\.\d+'"
+        version = subprocess.run(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        if version.returncode == 0:
+            self.ostl_version = version.stdout.strip()
+        else:
+            print("Fail to get OSTL version")
+            print("The application cannot start")
+            os._exit(1)
+
+        #Get device(machine) (eg "STM32MP25")
+        command = r"uname -n | awk '{print toupper($0)}'"
+        device = subprocess.run(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+        if device.returncode == 0:
+            self.device = device.stdout.strip()
+        else:
+            print("Fail to get device")
+            print("The application cannot start")
+            os._exit(1)
+
+        #Get UID (3x32 bits) from NVMEM (OTP 5/6/7)
+        try:
+            with open("/sys/bus/nvmem/devices/stm32-romem0/nvmem", 'rb') as otp:
+                otp.seek(5 * 4)
+                for i in range(3):
+                    self.uid[i] = otp.read(4)
+        except Exception as e:
+            print("Fail to get UID")
+            os._exit(1)
 
     def get_sensor_information(self):
         tmp_file = "/tmp/sensor_info.txt"
