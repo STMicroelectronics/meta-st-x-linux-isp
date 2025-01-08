@@ -206,9 +206,9 @@ evision_return_t evision_api_st_ae_init(evision_st_ae_process_t* const self);
  * @brief Run the ae process to calculate new gain and expsoure
  *
  * @param[in, out] self Concerned process instance address.
- * @param[in] image The current frame.
- * @param[in] use_ext_lum Flag to indicate the use of external AE measurements: 0 - use internal AE measurement, any other valid value - use external measurement.
- * @param[in] ext_lum External AE luminance measurement value. Range should normally be between 0 (completely dark image) and 255 (completely white image).
+ * @param[in] current_gain Current sensor gain in mdB.
+ * @param[in] current_exposure Current sensor exposure microsecond.
+ * @param[in] average_lum Average luminance measurement value. Range should normally be between 0 (completely dark image) and 255 (completely white image).
  *
  * @return
  * - EVISION_RET_SUCCESS
