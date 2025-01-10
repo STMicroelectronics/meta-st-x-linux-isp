@@ -2,10 +2,10 @@
     <img width="720" src="https://raw.githubusercontent.com/STMicroelectronics/meta-st-x-linux-isp/master/x-linux-isp-logo.png">
 </p>
 
-X-LINUX-ISP version: v5.0.1
+X-LINUX-ISP version: v6.0.0
 
 ## Enhancements, new features
-* Support OpenSTLinux 5.1.1 (alignement with DCMIPP kernel driver)
+* Support OpenSTLinux 6.0.1 (alignement with DCMIPP kernel driver)
 * Fix x-linux-isp binary
 
 ## Limitation
@@ -36,9 +36,9 @@ distribution. It contains recipes for ISP image quality software, tools and
 application examples for STM32MP25 series.
 
 ## Compatibility
-The X-LINUX-ISP OpenSTLinux Expansion Package v5.0.1 is compatible with the
-Yocto Project™ build system Mickledore. It is validated over the OpenSTLinux
-Distribution v5.1.x on STM32MP25x series.
+The X-LINUX-ISP OpenSTLinux Expansion Package v6.0.0 is compatible with the
+Yocto Project™ build system Scarthgap. It is validated over the OpenSTLinux
+Distribution v6.0.x on STM32MP25x series.
 
 ## Versioning
 The major versioning of the X-LINUX-ISP OpenSTLinux Expansion Package is aligned
@@ -54,7 +54,7 @@ The X-LINUX-ISP generic versioning v**x**.**y**.**z** is built as follows:
   a backward compatible manner.
 
 ## Available frameworks and tools within the meta-layer
-[X-LINUX-ISP v5.0.1 expansion package](https://wiki.st.com/stm32mpu-ecosystem-v5/wiki/Category:X-LINUX-ISP_expansion_package):
+[X-LINUX-ISP v6.0.0 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
 * ISP software:
   * libcamera with the support of the DCMIPP ISP Image Processing Algorithm
     (IPA) integrating Auto Exposure (AE) and Auto White Balance (AWB) and all
@@ -77,14 +77,14 @@ The X-LINUX-ISP generic versioning v**x**.**y**.**z** is built as follows:
     present in STM32 devices
 
 ## Further information on how to install and how to use X-LINUX-ISP Starter package
-<https://wiki.st.com/stm32mpu-ecosystem-v5/wiki/X-LINUX-ISP_Starter_package>
+<https://wiki.st.com/stm32mpu/wiki/X-LINUX-ISP_Starter_package>
 
 ## Further information on how to install and how to use X-LINUX-ISP Distribution package
-<https://wiki.st.com/stm32mpu-ecosystem-v5/wiki/X-LINUX-ISP_Distribution_package>
+<https://wiki.st.com/stm32mpu/wiki/X-LINUX-ISP_Distribution_package>
 
 ## Application samples
-<https://wiki.st.com/stm32mpu-ecosystem-v5/wiki/Category:ISP_-_Application_examples>
+<https://wiki.st.com/stm32mpu/wiki/Category:ISP_-_Application_examples>
 
 ## STM32 ISP tuning procedure
-<https://wiki.st.com/stm32mpu-ecosystem-v5/wiki/How_to_tune_ISP_using_the_STM32_ISP_IQTune>
+<https://wiki.st.com/stm32mpu/wiki/How_to_tune_ISP_using_the_STM32_ISP_IQTune>
 
