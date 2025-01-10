@@ -87,7 +87,7 @@ class GstWidget(Gtk.Box):
         print("Main pipe configuration: ", caps)
         caps_src = Gst.Caps.from_string(caps)
 
-        caps = "video/x-raw,width=" + str(PREVIEW_WIDTH) + ",height=" + str(PREVIEW_HEIGHT) + ",format=BGR"
+        caps = "video/x-raw,width=" + str(PREVIEW_WIDTH) + ",height=" + str(PREVIEW_HEIGHT) + ",format=RGB"
         print("Main pipe configuration: ", caps)
         caps_src2 = Gst.Caps.from_string(caps)
 
