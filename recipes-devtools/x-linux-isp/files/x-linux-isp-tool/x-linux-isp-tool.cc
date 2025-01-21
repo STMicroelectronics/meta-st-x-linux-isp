@@ -249,31 +249,42 @@ int main(int argc, char *argv[])
 {
     process_args(argc, argv);
 
-    /* Execute apt-get update first */
-    if (!version && !features) {
-        FILE *fp;
-        char path[1035];
+    if (version) {
+        std::cout << "\nX-LINUX-ISP version: " << README_VERSION << "\n" << std::endl;
+        return 0;
+    }
+    else if (features) {
+        std::cout << "\nISP software:\n " << README_SOFTWARE << std::endl;
+        std::cout << "\nApplication examples:\n " << README_APPLI << "\n" << std::endl;
+        std::cout << "\nUtilities:\n " << README_UTILITIES << "\n" << std::endl;
+        std::cout << "\nFind more information on the wiki page: https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package" << std::endl;
+        return 0;
+    }
 
-        /* Open the command for reading */
-        fp = popen("apt-get update 2>&1", "r");
-        if (fp == NULL) {
+    /* Execute apt-get update first */
+    FILE *fp;
+    char path[1035];
+
+    /* Open the command for reading */
+    fp = popen("apt-get update 2>&1", "r");
+    if (fp == NULL) {
+        std::cout << "Fail to synchronize ISP packages, apt-get update fails." << std::endl;
+        return 0;
+    }
+
+    /* Read the output a line at a time */
+    while (fgets(path, sizeof(path) - 1, fp) != NULL) {
+        /* Check for specific error message */
+        if (strstr(path, "W: Failed") != NULL) {
             std::cout << "Fail to synchronize ISP packages, apt-get update fails." << std::endl;
+            pclose(fp);
             return 0;
         }
-
-        /* Read the output a line at a time */
-        while (fgets(path, sizeof(path) - 1, fp) != NULL) {
-            /* Check for specific error message */
-            if (strstr(path, "W: Failed") != NULL) {
-                std::cout << "Fail to synchronize ISP packages, apt-get update fails." << std::endl;
-                pclose(fp);
-                return 0;
-            }
-        }
-
-        /* Close the command stream */
-        pclose(fp);
     }
+
+    /* Close the command stream */
+    pclose(fp);
+
 
     /* Get list of ISP packages */
     /* 2 search paths to get the list of ISP packages: the official path and citool path */
@@ -327,15 +338,6 @@ int main(int argc, char *argv[])
     }
     else if (to_remove && argc == 3) {
         manage_pkgs(argc, argv,false);
-    }
-    else if (version) {
-        std::cout << "\nX-LINUX-ISP version: " << README_VERSION << "\n" << std::endl;
-    }
-    else if (features) {
-        std::cout << "\nISP software:\n " << README_SOFTWARE << std::endl;
-        std::cout << "\nApplication examples:\n " << README_APPLI << "\n" << std::endl;
-        std::cout << "\nUtilities:\n " << README_UTILITIES << "\n" << std::endl;
-        std::cout << "\nFind more information on the wiki page: https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package" << std::endl;
     }
     else{
         print_help(argc, argv);
