@@ -466,6 +466,8 @@ class IQTuneCom():
             # 1 = average up stats
             # 2 = average down stats
             self._app.gst_widget.set_libcamera_property('statistic-profile', 0)
+            # Wait for full stats to be available
+            time.sleep(0.5)
             avg_values = self._app.gst_widget.get_libcamera_property('statistic-get-average-up')
             bin_values = self._app.gst_widget.get_libcamera_property('statistic-get-histogram-up')
             read_values = b''
@@ -480,6 +482,8 @@ class IQTuneCom():
             # 1 = average up stats
             # 2 = average down stats
             self._app.gst_widget.set_libcamera_property('statistic-profile', 0)
+            # Wait for full stats to be available
+            time.sleep(0.5)
             avg_values = self._app.gst_widget.get_libcamera_property('statistic-get-average-down')
             bin_values = self._app.gst_widget.get_libcamera_property('statistic-get-histogram-down')
             read_values = b''
