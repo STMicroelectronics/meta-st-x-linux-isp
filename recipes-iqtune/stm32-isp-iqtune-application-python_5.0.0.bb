@@ -51,7 +51,7 @@ RDEPENDS:${PN} += " \
     gstreamer1.0-plugins-base-app \
     gstreamer1.0-plugins-base-videoconvertscale \
     gtk+3 \
-    libcamera-gst \
+    libcamera-gst (>1:0.2.0-r0.0) \
     usbotg-gadget-acm-config \
     ${PYTHON_PN}-core \
     ${PYTHON_PN}-pyserial \
