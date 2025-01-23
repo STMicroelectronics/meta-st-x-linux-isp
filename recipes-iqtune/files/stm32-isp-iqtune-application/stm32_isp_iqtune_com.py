@@ -609,7 +609,7 @@ class IQTuneCom():
         elif cmd == CmdID.CMD_FIRMWARE_CONFIG.value:
             read_values = b''
             # Number of supported fields (RGBOrder, HasStatRemoval, etc..).
-            nb_field = 6
+            nb_field = 7
             read_values = read_values + pack('<I', nb_field)
             # 01 - RGBOrder (RGB = 0x00 (From DV6) -  BGR = 0x01 (DV5))
             rgb_order = 0x01 if self._app.ostl_version == "5.0" else 0x00
@@ -625,6 +625,8 @@ class IQTuneCom():
             read_values = read_values + pack('<I', device)
             # 06 - UID
             read_values = read_values + self._app.uid[0] + self._app.uid[1] + self._app.uid[2]
+            # 07 - HasSensorDelay.
+            read_values = read_values + pack('<I', True)
 
         else:
             print("Unkown get config command (" + str(cmd) + ")")
