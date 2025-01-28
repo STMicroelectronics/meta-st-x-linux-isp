@@ -102,6 +102,11 @@ typedef struct evision_st_ae_hyper_param {
    * <b>Restrictions:</b> >= 0 AND < 256. <br/>
    * <b>Default value:</b> 5 */
   uint32_t dark_zone_lum_limit;
+  /*! @brief
+   *  Compatible light frequency in Hz to avoid flickering effect. <br/>
+   * <b>Restrictions:</b> >= 0 (None) AND < 256. <br/>
+   * <b>Default value:</b> 0 (None) */
+  uint32_t compat_freq;
 
 } evision_st_ae_hyper_param_t;
 
@@ -163,6 +168,7 @@ typedef struct evision_st_ae_process_t {
 #define EVISION_ST_DEFAULT_EXPOSURE_MAX         33000   /* Default value for expsoure max */
 #define EVISION_ST_DEFAULT_GAIN_MIN             1       /* Default value for gain min */
 #define EVISION_ST_DEFAULT_GAIN_MAX             100     /* Default value for gain max */
+#define EVISION_ST_DEFAULT_COMPAT_FREQ          0       /* Default value for compatible frequency */
 
 
 /* Exported macro ------------------------------------------------------------*/
