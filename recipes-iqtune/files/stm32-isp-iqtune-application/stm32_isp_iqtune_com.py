@@ -242,6 +242,8 @@ class IQTuneCom():
                 elif ctypes.c_int8(val).value == 4:
                     val = 2.0
                 self._app.gst_widget.set_libcamera_property('aec-algo-exposure-compensation', val)
+                freq = unpack('<1I', data[12:16])[0]
+                self._app.gst_widget.set_libcamera_property('aec-algo-antiflicker-frequency', freq)
             self._app.gst_widget.set_libcamera_property('aec-algo-enable', enable)
 
         elif cmd == CmdID.CMD_AWBALGO.value:
@@ -397,6 +399,7 @@ class IQTuneCom():
             enable = self._app.gst_widget.get_libcamera_property('aec-algo-enable')
             expval = self._app.gst_widget.get_libcamera_property('aec-algo-exposure-compensation')
             exptarget = self._app.gst_widget.get_libcamera_property('aec-algo-exposure-target')
+            antiflickerfreq = self._app.gst_widget.get_libcamera_property('aec-algo-antiflicker-frequency')
             # convert float value to exposure compensation enum value
             if expval == -2.0:
                 expval = -4
@@ -420,6 +423,7 @@ class IQTuneCom():
             read_values = read_values + pack('b', expval)
             read_values = read_values + b'\x00' * 2 # padding to keep c-type structure aligned
             read_values = read_values + pack('<I', exptarget)
+            read_values = read_values + pack('<I', antiflickerfreq)
 
         elif cmd == CmdID.CMD_AWBALGO.value:
             enable = self._app.gst_widget.get_libcamera_property('awb-algo-enable')
@@ -619,7 +623,7 @@ class IQTuneCom():
             # 03 - HasGamma. Not supported.
             read_values = read_values + pack('<I', False)
             # 04 - HasAntiFlicker. Not supported for the time being.
-            read_values = read_values + pack('<I', False)
+            read_values = read_values + pack('<I', True)
             # 05 - DeviceId (N6=0x00  -  MP25=0x01 ...   0xFFFFFF = unknown)
             device = 0x01 if self._app.device.startswith("STM32MP25") else 0xFFFFFFFF
             read_values = read_values + pack('<I', device)
