@@ -21,15 +21,9 @@ import signal
 import subprocess
 import os.path
 import re
+import argparse
 
 from stm32_isp_iqtune_com import IQTuneCom
-
-# Init gstreamer
-Gst.init(None)
-Gst.init_check(None)
-# Init gtk
-Gtk.init(None)
-Gtk.init_check(None)
 
 # Path definition
 RESOURCES_DIRECTORY = os.path.abspath(os.path.dirname(__file__)) + "/resources/"
@@ -45,14 +39,11 @@ class ISPFormatID(Enum):
   ISP_FORMAT_RAW12    = 0x03
   ISP_FORMAT_RAW14    = 0x04
 
-class GstWidget(Gtk.Box):
+class GstPipeline():
     """
-    Class that handles Gstreamer pipeline using gtkwaylandsink and appsink
+    Class that handles Gstreamer pipeline using gtkwaylandsink (or fakesink) and appsink
     """
     def __init__(self, app):
-        super().__init__()
-        # connect the gtkwidget with the realize callback
-        self.connect('realize', self._on_realize)
         self.instant_fps = 0
         self.app = app
         self.dump_rgb = False
@@ -65,11 +56,10 @@ class GstWidget(Gtk.Box):
         self.dump_pitch = 0
         self.dump_format = 0
         self.isp_first_config = True
+        if self.app.headless:
+            self._camera_pipeline_creation()
 
-    def _on_realize(self, widget):
-        self._camera_pipeline_creation()
-
-    def _camera_pipeline_creation(self):
+    def _camera_pipeline_creation(self, widget=None):
         """
         creation of the gstreamer pipeline when gstwidget is created dedicated to handle
         camera stream
@@ -133,13 +123,22 @@ class GstWidget(Gtk.Box):
         # creation of the tee element
         tee = Gst.ElementFactory.make("tee", "tee0")
 
-        # creation of the gtkwaylandsink element to handle the gestreamer video stream
-        gtkwaylandsink = Gst.ElementFactory.make("gtkwaylandsink")
-        self.pack_start(gtkwaylandsink.props.widget, True, True, 0)
-        gtkwaylandsink.props.widget.show()
+        # creation of the pipelinesink element to handle the gstreamer video stream
+        # pipelinesink could be gtkwaylandsink of fakesink if not display available
+        if self.app.headless:
+            pipelinesink = Gst.ElementFactory.make("fakesink")
+        else:
+            if widget:
+                pipelinesink = Gst.ElementFactory.make("gtkwaylandsink")
+                widget.pack_start(pipelinesink.props.widget, True, True, 0)
+                pipelinesink.props.widget.show()
+            else:
+                print("Gtk widget to handle Gstreamer stream not created. Exiting.")
+                return False
+
 
         # Check if all elements were created
-        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, tee, videoconvert, gtkwaylandsink, self.appsink0, self.appsink1, self.appsink2]):
+        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, tee, videoconvert, pipelinesink, self.appsink0, self.appsink1, self.appsink2]):
             print("Not all elements could be created. Exiting.")
             return False
 
@@ -151,7 +150,7 @@ class GstWidget(Gtk.Box):
         self.gst_pipeline.add(queue2)
         self.gst_pipeline.add(tee)
         self.gst_pipeline.add(videoconvert)
-        self.gst_pipeline.add(gtkwaylandsink)
+        self.gst_pipeline.add(pipelinesink)
         self.gst_pipeline.add(self.appsink0)
         self.gst_pipeline.add(self.appsink1)
         self.gst_pipeline.add(self.appsink2)
@@ -160,13 +159,13 @@ class GstWidget(Gtk.Box):
         #              | src_0 --------> queue0 [caps_src0] -> appsink0
         #              | src_1 --------> queue1 [caps_src1] -> appsink1
         # libcamerasrc |
-        #              |              -> queue  [caps_src] --> gtkwaylandsink
+        #              |              -> queue  [caps_src] --> gtkwaylandsink (or fakesink)
         #              | src   -> tee
         #                             -> queue2 -------------> videoconvert [caps_src2] -> appsink2
         queue0.link_filtered(self.appsink0, caps_src0)
         queue1.link_filtered(self.appsink1, caps_src1)
 
-        queue.link_filtered(gtkwaylandsink, caps_src)
+        queue.link_filtered(pipelinesink, caps_src)
         videoconvert.link_filtered(self.appsink2, caps_src2)
         queue2.link(videoconvert)
         tee.link(queue)
@@ -320,6 +319,9 @@ class GstWidget(Gtk.Box):
 
         return Gst.FlowReturn.OK
 
+    def on_realize(self, widget):
+        self._camera_pipeline_creation(widget=widget)
+
     def set_libcamera_property(self, property, value):
         self.libcamerasrc.set_property(property, value)
 
@@ -389,8 +391,9 @@ class MainWindow(Gtk.Window):
         self.video_box.set_name("gui_main_video")
 
         # camera preview => gst stream
-        self.video_widget = self.app.gst_widget
+        self.video_widget = Gtk.Box()
         self.video_widget.set_app_paintable(True)
+        self.video_widget.connect("realize", self.app.gst_widget.on_realize)
         self.video_box.pack_start(self.video_widget, True, True, 0)
 
         # setup the exit box which contains the exit button
@@ -568,11 +571,10 @@ class Application:
     """
     Class that handles the whole application
     """
-    def __init__(self):
+    def __init__(self, args):
+        self.headless = args.headless
         #init variables uses :
         self.first_drawing_call = True
-        self.window_width = 0
-        self.window_height = 0
         self.sensor_name = None
         self.sensor_bayer_pattern = None
         self.sensor_pixel_depth = None
@@ -588,17 +590,27 @@ class Application:
         self.uid = [None, None, None]
         self.get_board_info()
         self.get_sensor_information()
-        self.get_display_resolution()
 
         #instantiate IQtune communication protocol
         self.iqtune_com = IQTuneCom(self)
+
+        #initialize Gstreamer
+        Gst.init(None)
+        Gst.init_check(None)
         #instantiate the Gstreamer pipeline
-        self.gst_widget = GstWidget(self)
-        #instantiate the main window
-        self.main_window = MainWindow(self)
-        #instantiate the overlay window
-        self.overlay_window = OverlayWindow(self)
-        self.show_all()
+        self.gst_widget = GstPipeline(self)
+
+        if self.headless:
+            GLib.idle_add(self.iqtune_com.loop)
+        else:
+            #initialize Gtk
+            Gtk.init(None)
+            Gtk.init_check(None)
+            #instantiate the main window
+            self.main_window = MainWindow(self)
+            #instantiate the overlay window
+            self.overlay_window = OverlayWindow(self)
+            self.show_all()
 
     def get_board_info(self):
         #Get OSTL version (eg "5.0")
@@ -757,8 +769,10 @@ class Application:
         return True
 
     def exit_app(self):
-        self.main_window.destroy()
-        self.overlay_window.destroy()
+        if not self.headless:
+            # if display is used, destroy the resources
+            self.main_window.destroy()
+            self.overlay_window.destroy()
         Gtk.main_quit()
         self.iqtune_com.cleanup()
         return False
@@ -770,9 +784,13 @@ if __name__ == '__main__':
     # add signal to catch CRTL+C
     signal.signal(signal.SIGINT, signal_handler)
 
-    #Application initialisation
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--headless", default=False, action='store_true', help="Start the IQTune application without display")
+    args = parser.parse_args()
+
+    # application initialisation
     try:
-        application = Application()
+        application = Application(args)
     except Exception as exc:
         print("Main Exception: ", exc )
 
