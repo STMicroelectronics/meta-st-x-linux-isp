@@ -610,8 +610,8 @@ class Application:
             print("The application cannot start")
             os._exit(1)
 
-        #Get device(machine) (eg "STM32MP25")
-        command = r"uname -n | awk '{print toupper($0)}'"
+        #Get device(machine) (eg "STM32MP257F-EV1")
+        command = r"cat /sys/firmware/devicetree/base/model | awk '{print $2}'"
         device = subprocess.run(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         if device.returncode == 0:
             self.device = device.stdout.strip()
