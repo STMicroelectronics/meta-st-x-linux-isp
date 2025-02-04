@@ -602,7 +602,7 @@ class Application:
 
     def get_board_info(self):
         #Get OSTL version (eg "5.0")
-        command = r"cat /etc/apt/sources.*/packages.* | grep -oP '(?<=packages.openstlinux.st.com/)\d+\.\d+'"
+        command = r"dpkg -s apt-openstlinux | grep -oP '(?<=Version: )\d+\.\d+'"
         version = subprocess.run(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
         if version.returncode == 0:
             self.ostl_version = version.stdout.strip()
