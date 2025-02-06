@@ -1,29 +1,29 @@
-From 7acdee71472effb1b7d9fd00296ebc54a8b9fa81 Mon Sep 17 00:00:00 2001
-From: Vincent ABRIOU <vincent.abriou@st.com>
-Date: Thu, 26 Sep 2024 12:57:37 +0200
-Subject: [PATCH 1/7] stm32-dcmipp: enable/disable demosaicing block via
- isp-params interface
+From 6c2db1e828322f27625572dc564181f6be49cac9 Mon Sep 17 00:00:00 2001
+From: Fabien Dessenne <fabien.dessenne@st.com>
+Date: Tue, 19 Nov 2024 09:54:51 +0100
+Subject: [PATCH] stm32-dcmipp: enable/disable demosaicing block via isp-params
+ interface
 
-Change-Id: I0b448d2af11c945da91fb45461065c2d83c98a15
 Signed-off-by: Vincent ABRIOU <vincent.abriou@st.com>
+Change-Id: I7a2fb1b7f099c5bc4c42118800aff084a8108562
 ---
  .../media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c  | 4 +++-
  include/uapi/linux/stm32-dcmipp-config.h                      | 2 ++
  2 files changed, 5 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c b/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c
-index 623403c6cc80..5f10d6153231 100644
+index 48ef5aa6c147..3f26ecc40a43 100644
 --- a/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c
 +++ b/drivers/media/platform/st/stm32/stm32-dcmipp/dcmipp-isp-params.c
-@@ -299,6 +299,7 @@ dcmipp_isp_params_apply_ex(struct dcmipp_isp_params_device *vout,
+@@ -289,6 +289,7 @@ dcmipp_isp_params_apply_ex(struct dcmipp_isp_params_device *vout,
  }
  
- #define DCMIPP_P1DMCR (0x870)
-+#define DCMIPP_P1DMCR_ENABLE BIT(0)
- #define DCMIPP_P1DMCR_PEAK_SHIFT 16
- #define DCMIPP_P1DMCR_PEAK_MASK 0x07
- #define DCMIPP_P1DMCR_LINEV_SHIFT 20
-@@ -331,7 +332,8 @@ dcmipp_isp_params_apply_dm(struct dcmipp_isp_params_device *vout,
+ #define DCMIPP_P1DMCR			0x870
++#define DCMIPP_P1DMCR_ENABLE		BIT(0)
+ #define DCMIPP_P1DMCR_PEAK_SHIFT	16
+ #define DCMIPP_P1DMCR_PEAK_MASK		0x07
+ #define DCMIPP_P1DMCR_LINEV_SHIFT	20
+@@ -321,7 +322,8 @@ dcmipp_isp_params_apply_dm(struct dcmipp_isp_params_device *vout,
  	       DCMIPP_P1DMCR_EDGE_MASK << DCMIPP_P1DMCR_EDGE_SHIFT;
  
  	dmcr = reg_read(vout, DCMIPP_P1DMCR) & ~mask;

@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/MIT;md5=0835ade698e0bcf8506ecda
 
 SRC_URI = " \
     file://apt-openstlinux-x-linux-isp/10-st-disclaimer-extra-isp \
-    file://apt-openstlinux-x-linux-isp/extra.isp.packages.openstlinux.st.com.list \
+    file://apt-openstlinux-x-linux-isp/6.0/extra.isp.packages.openstlinux.st.com.list \
 "
 
 # The package is target-independant
@@ -19,8 +19,8 @@ inherit allarch
 S = "${WORKDIR}"
 
 RDEPENDS:${PN} = " \
-    apt-openstlinux (>= 5.1-r0) \
-    apt-openstlinux (< 5.2) \
+    apt-openstlinux (>= 6.0-r0) \
+    apt-openstlinux (< 6.1) \
 "
 
 FILES:${PN} = " \
@@ -34,6 +34,6 @@ do_compile[noexec] = "1"
 do_install() {
     install -d ${D}/${sysconfdir}/apt/sources.list.d
     install -d ${D}/${sysconfdir}/apt/apt.conf.d
-    install ${S}/apt-openstlinux-x-linux-isp/extra.isp.packages.openstlinux.st.com.list   ${D}${sysconfdir}/apt/sources.list.d
-    install ${S}/apt-openstlinux-x-linux-isp/10-st-disclaimer-extra-isp                   ${D}${sysconfdir}/apt/apt.conf.d
+    install ${S}/apt-openstlinux-x-linux-isp/6.0/extra.isp.packages.openstlinux.st.com.list ${D}${sysconfdir}/apt/sources.list.d
+    install ${S}/apt-openstlinux-x-linux-isp/10-st-disclaimer-extra-isp ${D}${sysconfdir}/apt/apt.conf.d
 }
