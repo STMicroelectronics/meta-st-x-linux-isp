@@ -67,6 +67,7 @@ class IQTuneCom():
         self._comport = '/dev/ttyGS0'
         self._baudrate = 115200
         self._ser = None
+        self._original_statistic_profile = None
 
         # Disable ethernet usb gadget
         cmd = 'su -c "stm32_usbotg_eth_config.sh stop"'
@@ -129,15 +130,17 @@ class IQTuneCom():
                 self._close()
         return
 
-    def _update_statistic_profile(self):
-        # this function is called in a thread to update the statistic profile
+    def _store_original_statistic_profile(self):
+        if self._original_statistic_profile is None:
+            self._original_statistic_profile = self._app.gst_widget.get_libcamera_property('statistic-profile')
+
+    def _restore_statistic_profile(self):
+        # this function is called in a thread to restore the statistic profile
         # after a sleep of 1.5 seconds so that the algorithm are not slow down
         # anymore by the full stats profile.
-        # 0 = Full stats (histogram and average, up and down)
-        # 1 = average up stats
-        # 2 = average down stats
         time.sleep(1.5)  # Wait for 1.5 seconds
-        self._app.gst_widget.set_libcamera_property('statistic-profile', 2)
+        if self._original_statistic_profile is not None:
+            self._app.gst_widget.set_libcamera_property('statistic-profile', self._original_statistic_profile)
 
     def cleanup(self):
         self.__del__()
@@ -465,6 +468,7 @@ class IQTuneCom():
                 read_values = read_values + pack('<i', val)
 
         elif cmd == CmdID.CMD_STATISTICUP.value:
+            self._store_original_statistic_profile()
             # Set statistic profile to get full stats:
             # 0 = Full stats (histogram and average, up and down)
             # 1 = average up stats
@@ -481,6 +485,7 @@ class IQTuneCom():
                 read_values = read_values + pack('<I', val)
 
         elif cmd == CmdID.CMD_STATISTICDOWN.value:
+            self._store_original_statistic_profile()
             # Set statistic profile to get full stats:
             # 0 = Full stats (histogram and average, up and down)
             # 1 = average up stats
@@ -496,7 +501,7 @@ class IQTuneCom():
             for val in bin_values:
                 read_values = read_values + pack('<I', val)
             # revert back the statistic profile in some seconds
-            threading.Thread(target=self._update_statistic_profile).start()
+            threading.Thread(target=self._restore_statistic_profile).start()
 
 
         elif cmd == CmdID.CMD_DUMP_PREVIEW_FRAME.value:
