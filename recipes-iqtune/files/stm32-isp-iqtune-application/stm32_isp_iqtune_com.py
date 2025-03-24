@@ -64,6 +64,7 @@ class IQTuneCom():
     """
     def __init__(self, app):
         self._app = app
+        self._cleanup = False
         self._comport = '/dev/ttyGS0'
         self._baudrate = 115200
         self._ser = None
@@ -143,6 +144,7 @@ class IQTuneCom():
             self._app.gst_widget.set_libcamera_property('statistic-profile', self._original_statistic_profile)
 
     def cleanup(self):
+        self._cleanup = True
         self.__del__()
 
     def cmd_parser_setconfig(self, data):
@@ -670,9 +672,10 @@ class IQTuneCom():
         loop function call as a gtk idle function to check com port reception
         regularly
         """
-        data = self._get_data()
-        if data:
-            if not self.cmd_parser_process_command(data):
-                print("Error while processing the received command")
+        if not self._cleanup:
+            data = self._get_data()
+            if data:
+                if not self.cmd_parser_process_command(data):
+                    print("Error while processing the received command")
 
         return True
