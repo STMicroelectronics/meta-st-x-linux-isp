@@ -695,7 +695,7 @@ class Application:
             self.raw_format = Rawformat[self.sensor_pixel_depth]
 
             # Linux kernel 6.6 workaround. IMX335 driver declares height = 1944 but supports only 1940. This shall be fixed in kernel 6.10
-            if self.sensor_name == "imx335" and self.sensor_height == 1944:
+            if self.sensor_name == "imx335" and self.sensor_height == 1944 and float(self.ostl_version) < 6.1:
                 self.sensor_height = 1940
 
             # remove the temporary file
