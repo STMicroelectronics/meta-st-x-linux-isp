@@ -53,6 +53,7 @@ class CmdID(Enum):
   CMD_SENSORDELAY         = 0x1A
   CMD_SENSORDELAYMEASURE  = 0x1B
   CMD_FIRMWARE_CONFIG     = 0x1C
+  CMD_UNIQUE_GAMMA        = 0x1D
 #Application API commands for test purpose
   CMD_USER_EXPOSURETARGET = 0x80
   CMD_USER_LISTWBREFMODES = 0x81
@@ -298,9 +299,14 @@ class IQTuneCom():
             ret = 0
 
         elif cmd == CmdID.CMD_GAMMA.value:
-            # Gamma is automaticaly activated by libcamera according to the role set by the user
+            # Gamma is not supported but unique gamma command is
             # This command return an error
             ret = 1
+
+        elif cmd == CmdID.CMD_UNIQUE_GAMMA.value:
+            # retrieve values from the command
+            enable = data[4]
+            self._app.gst_widget.set_libcamera_property('gamma-enable', enable)
 
         elif cmd == CmdID.CMD_SENSORTESTPATTERN.value:
             print("CMD_SENSORTESTPATTERN")
@@ -572,9 +578,13 @@ class IQTuneCom():
                 read_values = read_values + pack('<I', val)
 
         elif cmd == CmdID.CMD_GAMMA.value:
-            # Gamma is automaticaly activated by libcamera according to the role set by the user
+            # Gamma is not supported but unique gamma command is
             # This command return an error
             ret = 1
+
+        elif cmd == CmdID.CMD_UNIQUE_GAMMA.value:
+            enable = self._app.gst_widget.get_libcamera_property('gamma-enable')
+            read_values = pack('<I', enable)
 
         elif cmd == CmdID.CMD_SENSORINFO.value:
             read_values = b''
@@ -620,7 +630,7 @@ class IQTuneCom():
         elif cmd == CmdID.CMD_FIRMWARE_CONFIG.value:
             read_values = b''
             # Number of supported fields (RGBOrder, HasStatRemoval, etc..).
-            nb_field = 7
+            nb_field = 8
             read_values = read_values + pack('<I', nb_field)
             # 01 - RGBOrder (RGB = 0x00 (From DV6) -  BGR = 0x01 (DV5))
             rgb_order = 0x01 if self._app.ostl_version == "5.0" else 0x00
@@ -637,6 +647,8 @@ class IQTuneCom():
             # 06 - UID
             read_values = read_values + self._app.uid[0] + self._app.uid[1] + self._app.uid[2]
             # 07 - HasSensorDelay.
+            read_values = read_values + pack('<I', True)
+            # 08 - HasUniqueGamma.
             read_values = read_values + pack('<I', True)
 
         else:
