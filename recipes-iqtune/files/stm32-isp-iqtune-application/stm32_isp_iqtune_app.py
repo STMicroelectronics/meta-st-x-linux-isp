@@ -281,7 +281,7 @@ class GstWidget(Gtk.Box):
                 self.dump_width = caps.get_structure(0).get_value('width')
                 self.dump_height = caps.get_structure(0).get_value('height')
                 self.dump_pitch = int(self.dump_size / self.dump_height)
-                self.dump_format = ISPFormatID.ISP_FORMAT_RAW10.value
+                self.dump_format = self.app.raw_format
 
                 self.dump_raw = False
                 return Gst.FlowReturn.OK
@@ -576,6 +576,7 @@ class Application:
         self.sensor_name = None
         self.sensor_bayer_pattern = None
         self.sensor_pixel_depth = None
+        self.raw_format = None
         self.sensor_width = None
         self.sensor_height = None
         self.sensor_expo_min = None
@@ -673,6 +674,13 @@ class Application:
                     if match:
                         self.sensor_gain_min = int(float(match.group(1))) * 1000 # mdB
                         self.sensor_gain_max = int(float(match.group(2))) * 1000 # mdB
+
+            Rawformat = {8:  ISPFormatID.ISP_FORMAT_RAW8.value,  # RAW8  bpp=8  => format 1
+                         10: ISPFormatID.ISP_FORMAT_RAW10.value, # RAW10 bpp=10 => format 2
+                         12: ISPFormatID.ISP_FORMAT_RAW12.value, # RAW12 bpp=12 => format 3
+                         14: ISPFormatID.ISP_FORMAT_RAW14.value  # RAW14 bpp=14 => format 4
+                        }
+            self.raw_format = Rawformat[self.sensor_pixel_depth]
 
             # Linux kernel 6.6 workaround. IMX335 driver declares height = 1944 but supports only 1940. This shall be fixed in kernel 6.10
             if self.sensor_name == "imx335" and self.sensor_height == 1944:
