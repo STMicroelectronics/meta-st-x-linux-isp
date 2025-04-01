@@ -2,11 +2,11 @@
     <img width="720" src="https://raw.githubusercontent.com/STMicroelectronics/meta-st-x-linux-isp/master/x-linux-isp-logo.png">
 </p>
 
-X-LINUX-ISP version: v6.0.0
+X-LINUX-ISP version: v6.0.1
 
 ## Enhancements, new features
-* Support OpenSTLinux 6.0.1 (alignement with DCMIPP kernel driver)
-* Fix x-linux-isp binary
+* Support OpenSTLinux 6.0.2 (fix issue while applying Gstreamer patches)
+* Fix RAW Bayer format when dumping RAW Bayer frame
 
 ## Limitation
 * None
@@ -36,7 +36,7 @@ distribution. It contains recipes for ISP image quality software, tools and
 application examples for STM32MP25 series.
 
 ## Compatibility
-The X-LINUX-ISP OpenSTLinux Expansion Package v6.0.0 is compatible with the
+The X-LINUX-ISP OpenSTLinux Expansion Package v6.0.1 is compatible with the
 Yocto Project™ build system Scarthgap. It is validated over the OpenSTLinux
 Distribution v6.0.x on STM32MP25x series.
 
@@ -54,7 +54,7 @@ The X-LINUX-ISP generic versioning v**x**.**y**.**z** is built as follows:
   a backward compatible manner.
 
 ## Available frameworks and tools within the meta-layer
-[X-LINUX-ISP v6.0.0 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
+[X-LINUX-ISP v6.0.1 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
 * ISP software:
   * libcamera with the support of the DCMIPP ISP Image Processing Algorithm
     (IPA) integrating Auto Exposure (AE) and Auto White Balance (AWB) and all
