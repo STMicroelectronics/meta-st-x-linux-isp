@@ -1,16 +1,20 @@
 /**
- * @file        evision-api-awb.h
- * @author      LACROIX - Impulse
- * @copyright   Copyright (c) 2023 LACROIX - Impulse. All rights reserved.
- * @brief       eVision Auto Exposure algorithm public header.
+ ******************************************************************************
+ * @file    evision-api-awb.h
+ * @author  LACROIX - Impulse
+ * @brief   eVision Auto White Balance algorithm public header.
+ ******************************************************************************
+ * @attention
  *
- * Copyright (c) 2023 STMicroelectronics.
+ * Copyright (c) 2023 LACROIX - Impulse.
+ * Copyright (c) 2025 STMicroelectronics.
  * All rights reserved.
  *
  * This software is licensed under terms that can be found in the LICENSE file
  * in the root directory of this software component.
  * If no LICENSE file comes with this software, it is provided AS-IS.
  *
+ ******************************************************************************
  */
 
 #ifndef EVISION_API_AWB_H_

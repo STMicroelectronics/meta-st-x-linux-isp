@@ -1,12 +1,13 @@
 /**
  ******************************************************************************
  * @file    evision-api-st-ae.h
- * @author  AIS Application Team
- * @brief   Header file of AE algorithm
+ * @author  STMicroelectronics / LACROIX - Impulse
+ * @brief   ST eVision Auto Exposure algorithm public header.
  ******************************************************************************
  * @attention
  *
- * Copyright (c) 2024 STMicroelectronics.
+ * Copyright (c) 2025 STMicroelectronics.
+ * Copyright (c) 2023 LACROIX - Impulse.
  * All rights reserved.
  *
  * This software is licensed under terms that can be found in the LICENSE file
