@@ -71,29 +71,21 @@ class IQTuneCom():
         self._ser = None
         self._original_statistic_profile = None
 
-        # Disable ethernet usb gadget
+        # Disable ethernet usb gadget if already set
         cmd = 'su -c "stm32_usbotg_eth_config.sh stop"'
         ret = subprocess.run(cmd, shell=True)
         if ret.returncode != 0:
             print("Fail to disable ethernet usb gadget")
-        # Enable serial usb gadget for USB serial communication
-        cmd = 'su -c "stm32_usbotg_acm_config.sh start"'
+        # Enable ACM gadget for USB serial communication and UVC gadget for UVC livepreview providing the targeted fps
+        cmd = 'su -c "stm32_usbotg_acm_uvc_config.sh restart 640 480 ' + str(self._app.sensor_fps_max) + '"'
         ret = subprocess.run(cmd, shell=True)
         if ret.returncode != 0:
             print("Fail to enable selrial usb gadget")
 
     def __del__(self):
         self._close()
-        # Disable serial usb gadget
-        cmd = 'su -c "stm32_usbotg_acm_config.sh stop"'
-        test = subprocess.run(cmd, shell=True)
-        if test.returncode != 0:
-            print("Fail to disable serial usb gadget")
-        # Restore ethernet usb gadget
-        cmd = 'su -c "stm32_usbotg_eth_config.sh start"'
-        test = subprocess.run(cmd, shell=True)
-        if test.returncode != 0:
-            print("Fail to restore ethernet usb gadget")
+        # Keep ACM and UVC gadget configfs alive.
+        # Let user performs a manual action to reenable the USB eth gadget.
 
     def _open(self):
         if self._ser is None or not self._ser.is_open:
