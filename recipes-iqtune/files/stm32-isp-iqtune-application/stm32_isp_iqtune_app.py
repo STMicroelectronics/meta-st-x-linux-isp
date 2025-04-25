@@ -55,9 +55,26 @@ class GstPipeline():
         self.dump_height = 0
         self.dump_pitch = 0
         self.dump_format = 0
+        self._uvc_video_dev = self._get_video_device_for_uvc()
         self.isp_first_config = True
         if self.app.headless:
             self._camera_pipeline_creation()
+
+    def _get_video_device_for_uvc(self):
+        cmd = "v4l2-ctl --list-devices"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+
+        # Parse the output
+        lines = result.stdout.splitlines()
+        device_name = None
+        for i, line in enumerate(lines):
+            if "dwc3-gadget" in line:
+                # The next line should contain the device path
+                if i + 1 < len(lines):
+                    device_name = lines[i + 1].strip()
+                    break
+
+        return device_name
 
     def _camera_pipeline_creation(self, widget=None):
         """
@@ -73,11 +90,11 @@ class GstPipeline():
             raise Exception("Could not create Gstreamer camera source element")
 
         #creation of the libcamerasrc caps for the 3 pipelines
-        caps = "video/x-raw,width=" + str(PREVIEW_WIDTH) + ",height=" + str(PREVIEW_HEIGHT) + ",format=RGB16"
+        caps = "video/x-raw,width=" + str(self.app.preview_width) + ",height=" + str(self.app.preview_height) + ",format=RGB16"
         print("Main pipe configuration: ", caps)
         caps_src = Gst.Caps.from_string(caps)
 
-        caps = "video/x-raw,width=" + str(PREVIEW_WIDTH) + ",height=" + str(PREVIEW_HEIGHT) + ",format=RGB"
+        caps = "video/x-raw,width=" + str(self.app.preview_width) + ",height=" + str(self.app.preview_height) + ",format=RGB"
         print("Main pipe configuration: ", caps)
         caps_src2 = Gst.Caps.from_string(caps)
 
@@ -94,9 +111,11 @@ class GstPipeline():
         queue0 = Gst.ElementFactory.make("queue", "queue0")
         queue1 = Gst.ElementFactory.make("queue", "queue1")
         queue2 = Gst.ElementFactory.make("queue", "queue2")
+        queue3 = Gst.ElementFactory.make("queue", "queue3")
 
         # creation of the videoconvert element
-        videoconvert = Gst.ElementFactory.make("videoconvert", "convert")
+        videoconvert2 = Gst.ElementFactory.make("videoconvert", "convert2")
+        videoconvert3 = Gst.ElementFactory.make("videoconvert", "convert3")
 
         # creation and configuration of the appsink elements
         self.appsink0 = Gst.ElementFactory.make("appsink", "appsink0")
@@ -120,6 +139,11 @@ class GstPipeline():
         self.appsink2.set_property("drop", True)
         self.appsink2.connect("new-sample", self._new_sample_preview)
 
+        # creation of the uvcsink element and configuration of the v4l2Sink element created by uvcsink
+        self.uvcsink = Gst.ElementFactory.make("uvcsink", "uvcsink")
+        v4l2sink = self.uvcsink.get_child_by_name("v4l2sink")
+        v4l2sink.set_property("device", self._uvc_video_dev)
+
         # creation of the tee element
         tee = Gst.ElementFactory.make("tee", "tee0")
 
@@ -136,9 +160,8 @@ class GstPipeline():
                 print("Gtk widget to handle Gstreamer stream not created. Exiting.")
                 return False
 
-
         # Check if all elements were created
-        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, tee, videoconvert, pipelinesink, self.appsink0, self.appsink1, self.appsink2]):
+        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, queue3, tee, videoconvert2, videoconvert3, pipelinesink, self.appsink0, self.appsink1, self.appsink2, self.uvcsink]):
             print("Not all elements could be created. Exiting.")
             return False
 
@@ -148,28 +171,34 @@ class GstPipeline():
         self.gst_pipeline.add(queue0)
         self.gst_pipeline.add(queue1)
         self.gst_pipeline.add(queue2)
+        self.gst_pipeline.add(queue3)
         self.gst_pipeline.add(tee)
-        self.gst_pipeline.add(videoconvert)
+        self.gst_pipeline.add(videoconvert2)
+        self.gst_pipeline.add(videoconvert3)
         self.gst_pipeline.add(pipelinesink)
         self.gst_pipeline.add(self.appsink0)
         self.gst_pipeline.add(self.appsink1)
         self.gst_pipeline.add(self.appsink2)
+        self.gst_pipeline.add(self.uvcsink)
 
         # linking elements together
         #              | src_0 --------> queue0 [caps_src0] -> appsink0
         #              | src_1 --------> queue1 [caps_src1] -> appsink1
         # libcamerasrc |
         #              |              -> queue  [caps_src] --> gtkwaylandsink (or fakesink)
-        #              | src   -> tee
-        #                             -> queue2 -------------> videoconvert [caps_src2] -> appsink2
+        #              | src   -> tee -> queue2 -------------> videoconvert2 [caps_src2] -> appsink2 (genuine livefeedback)
+        #                             -> queue3 -------------> videoconvert3 -> uvcsink (UVC streaming using v4l2sink)
         queue0.link_filtered(self.appsink0, caps_src0)
         queue1.link_filtered(self.appsink1, caps_src1)
 
         queue.link_filtered(pipelinesink, caps_src)
-        videoconvert.link_filtered(self.appsink2, caps_src2)
-        queue2.link(videoconvert)
+        videoconvert2.link_filtered(self.appsink2, caps_src2)
+        queue2.link(videoconvert2)
+        videoconvert3.link(self.uvcsink)
+        queue3.link(videoconvert3)
         tee.link(queue)
         tee.link(queue2)
+        tee.link(queue3)
 
         src_pad = self.libcamerasrc.get_static_pad("src")
         src_request_pad_template = self.libcamerasrc.get_pad_template("src_%u")
@@ -191,12 +220,12 @@ class GstPipeline():
         src_request_pad1.link(queue1_sink_pad)
 
         # getting pipeline bus
-        self.bus_preview = self.gst_pipeline.get_bus()
-        self.bus_preview.add_signal_watch()
-        self.bus_preview.connect('message::error', self._msg_error_cb)
-        self.bus_preview.connect('message::eos', self._msg_eos_cb)
-        self.bus_preview.connect('message::info', self._msg_info_cb)
-        self.bus_preview.connect('message::state-changed', self._msg_state_changed_cb)
+        self.bus = self.gst_pipeline.get_bus()
+        self.bus.add_signal_watch()
+        self.bus.connect('message::error', self._msg_error_cb)
+        self.bus.connect('message::eos', self._msg_eos_cb)
+        self.bus.connect('message::info', self._msg_info_cb)
+        self.bus.connect('message::state-changed', self._msg_state_changed_cb)
 
         # set pipeline in playing mode
         self.gst_pipeline.set_state(Gst.State.PLAYING)
@@ -525,7 +554,7 @@ class OverlayWindow(Gtk.Window):
             GLib.idle_add(self.update_stat_area)
 
             #adapt the drawing overlay depending on the image/camera stream displayed
-            preview_ratio = float(PREVIEW_WIDTH) / float(PREVIEW_HEIGHT)
+            preview_ratio = float(self.app.preview_width) / float(self.app.preview_height)
             self.preview_height = self.drawing_height
             self.preview_width =  preview_ratio * self.preview_height
             if self.preview_width >= self.drawing_width:
@@ -574,6 +603,8 @@ class Application:
     def __init__(self, args):
         self.headless = args.headless
         #init variables uses :
+        self.preview_width = PREVIEW_WIDTH
+        self.preview_height = PREVIEW_HEIGHT
         self.first_drawing_call = True
         self.sensor_name = None
         self.sensor_bayer_pattern = None
@@ -585,6 +616,7 @@ class Application:
         self.sensor_expo_max = None
         self.sensor_gain_min = None
         self.sensor_gain_max = None
+        self.sensor_fps_max = None
         self.ostl_version = None
         self.device = None
         self.uid = [None, None, None]
@@ -661,6 +693,7 @@ class Application:
             pattern_resolution = r'Property: PixelArraySize = (\d+)x(\d+)'
             pattern_expo = r'Control: ExposureTime: \[(\d+)\.\.(\d+)\]'
             pattern_gain = r'Control: AnalogueGain_dB: \[([0-9.]+)\.\.([0-9.]+)\]'
+            pattern_fps = r'Control: FrameDurationLimits: \[(\d+)\.\.(\d+)\]'
 
             # Read the file and search for the pattern
             with open(tmp_file, 'r') as file:
@@ -686,6 +719,9 @@ class Application:
                     if match:
                         self.sensor_gain_min = int(float(match.group(1))) * 1000 # mdB
                         self.sensor_gain_max = int(float(match.group(2))) * 1000 # mdB
+                    match = re.search(pattern_fps, line)
+                    if match:
+                        self.sensor_fps_max = int((1 / int(match.group(1))) * 1000000) # fps
 
             Rawformat = {8:  ISPFormatID.ISP_FORMAT_RAW8.value,  # RAW8  bpp=8  => format 1
                          10: ISPFormatID.ISP_FORMAT_RAW10.value, # RAW10 bpp=10 => format 2

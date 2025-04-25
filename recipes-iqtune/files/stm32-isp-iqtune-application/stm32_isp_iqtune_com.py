@@ -77,7 +77,7 @@ class IQTuneCom():
         if ret.returncode != 0:
             print("Fail to disable ethernet usb gadget")
         # Enable ACM gadget for USB serial communication and UVC gadget for UVC livepreview providing the targeted fps
-        cmd = 'su -c "stm32_usbotg_acm_uvc_config.sh restart 640 480 ' + str(self._app.sensor_fps_max) + '"'
+        cmd = 'su -c "stm32_usbotg_acm_uvc_config.sh restart ' + str(self._app.preview_width) + ' ' + str(self._app.preview_height) + ' ' + str(self._app.sensor_fps_max) + '"'
         ret = subprocess.run(cmd, shell=True)
         if ret.returncode != 0:
             print("Fail to enable selrial usb gadget")
@@ -622,7 +622,7 @@ class IQTuneCom():
         elif cmd == CmdID.CMD_FIRMWARE_CONFIG.value:
             read_values = b''
             # Number of supported fields (RGBOrder, HasStatRemoval, etc..).
-            nb_field = 8
+            nb_field = 9
             read_values = read_values + pack('<I', nb_field)
             # 01 - RGBOrder (RGB = 0x00 (From DV6) -  BGR = 0x01 (DV5))
             rgb_order = 0x01 if self._app.ostl_version == "5.0" else 0x00
@@ -641,6 +641,8 @@ class IQTuneCom():
             # 07 - HasSensorDelay.
             read_values = read_values + pack('<I', True)
             # 08 - HasUniqueGamma.
+            read_values = read_values + pack('<I', True)
+            # 09 - HasUVC.
             read_values = read_values + pack('<I', True)
 
         else:
