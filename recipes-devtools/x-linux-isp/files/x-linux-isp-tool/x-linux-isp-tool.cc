@@ -313,27 +313,22 @@ int main(int argc, char *argv[])
     }
     else if (to_install && argc == 3) {
         manage_pkgs(argc, argv,true);
-        /* If libcamera is not marked as installed then force the kernel module to be reloaded */
-        if (!_is_package_in_list(installedPackages, "libcamera")) {
-            std::cout << "\nKernel module stm32_dcmipp need to be reloaded: reload on going... " << std::endl;
-            if (system("systemctl stop weston-graphical-session")) {
+        /* If stm32-isp-iqtune-application-python is not marked as installed then force the kernel module to be reloaded */
+        if (!_is_package_in_list(installedPackages, "stm32-isp-iqtune-application-python")) {
+            std::cout << "\nKernel module videobuf2_dma_sg need to be reloaded: reload on going... " << std::endl;
+            if (system("modprobe -r usb_f_uvc")) {
                 std::cout << "Fail to upgrade the kernel module. Please reset your platform." << std::endl;
                 return 0;
             }
-            if (system("modprobe -r stm32_dcmipp")) {
+            if (system("modprobe -r videobuf2_dma_sg")) {
                 std::cout << "Fail to upgrade the kernel module. Please reset your platform." << std::endl;
                 return 0;
             }
-            std::cout << "\nWeston is restarting..." << std::endl;
-            if (system("modprobe stm32_dcmipp")) {
+            if (system("modprobe usb_f_uvc")) {
                 std::cout << "Fail to upgrade the kernel module. Please reset your platform." << std::endl;
                 return 0;
             }
-            if (system("systemctl start weston-graphical-session")) {
-                std::cout << "Fail to upgrade the kernel module. Please reset your platform." << std::endl;
-                return 0;
-            }
-            std::cout << "\nKernel module stm32_dcmipp reload successfully done." << std::endl;
+            std::cout << "\nKernel module videobuf2_dma_sg reload successfully done." << std::endl;
         }
     }
     else if (to_remove && argc == 3) {
