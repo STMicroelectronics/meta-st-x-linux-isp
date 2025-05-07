@@ -13,7 +13,11 @@ cmd="python3 /usr/local/x-linux-isp/stm32-isp-iqtune-app/stm32_isp_iqtune_app.py
 
 if [ "$weston_user" != "root" ]; then
     echo "user : "$weston_user
-    script -qc "su -l $weston_user -c '$cmd'"
+    if [ "$1" == "--validation" ]; then
+        script -qc "su -l $weston_user -c 'export LIBCAMERA_LOG_LEVELS=\"Request:DEBUG\"; $cmd'"
+    else
+        script -qc "su -l $weston_user -c '$cmd'"
+    fi
 else
     $cmd
 fi

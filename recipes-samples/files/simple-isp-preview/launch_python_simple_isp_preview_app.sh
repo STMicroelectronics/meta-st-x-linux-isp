@@ -14,7 +14,7 @@ cmd="python3 /usr/local/x-linux-isp/simple-isp-preview/simple_isp_preview_app.py
 if [ "$weston_user" != "root" ]; then
     echo "user : "$weston_user
     if [ "$1" == "--validation" ]; then
-        script -qc "su -l $weston_user -c 'export LIBCAMERA_LOG_LEVELS=\"Request:DEBUG\"; export LIBCAMERA_LOG_FILE=\"/tmp/libcamera_output.log\"; $cmd'"
+        script -qc "su -l $weston_user -c 'export LIBCAMERA_LOG_LEVELS=\"Request:DEBUG\"; $cmd'"
     else
         script -qc "su -l $weston_user -c '$cmd'"
     fi
