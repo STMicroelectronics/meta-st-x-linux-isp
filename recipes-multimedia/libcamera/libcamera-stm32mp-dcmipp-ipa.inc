@@ -18,5 +18,5 @@ RDEPENDS:${PN} += " \
 
 RDEPENDS:${PN}-gst += " \
     gstreamer1.0-python \
-    libcamera (>= ${EXTENDPKGV}) \
+    libcamera-stm32mp (>= ${EXTENDPKGV}) \
 "

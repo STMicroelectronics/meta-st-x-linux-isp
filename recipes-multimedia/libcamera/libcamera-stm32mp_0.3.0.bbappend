@@ -1,4 +1,4 @@
-require libcamera_dcmipp_ipa.inc
+require libcamera-stm32mp-dcmipp-ipa.inc
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 

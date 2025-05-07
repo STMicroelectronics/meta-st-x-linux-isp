@@ -48,7 +48,7 @@ RDEPENDS:${PN} += " \
     gstreamer1.0-plugins-bad-debugutilsbad \
     gstreamer1.0-plugins-base-app \
     gtk+3 \
-    libcamera-gst (>=${LIBCAMERA_VERSION_MIN}) \
+    libcamera-stm32mp-gst (>=${LIBCAMERA_VERSION_MIN}) \
     ${PYTHON_PN}-core \
     bash \
 "
