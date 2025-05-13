@@ -29,7 +29,6 @@ from stm32_isp_iqtune_com import IQTuneCom
 RESOURCES_DIRECTORY = os.path.abspath(os.path.dirname(__file__)) + "/resources/"
 
 # Static information about the preview size
-PREVIEW_WIDTH  = 640
 PREVIEW_HEIGHT = 480
 
 class ISPFormatID(Enum):
@@ -603,8 +602,6 @@ class Application:
     def __init__(self, args):
         self.headless = args.headless
         #init variables uses :
-        self.preview_width = PREVIEW_WIDTH
-        self.preview_height = PREVIEW_HEIGHT
         self.first_drawing_call = True
         self.sensor_name = None
         self.sensor_bayer_pattern = None
@@ -622,6 +619,11 @@ class Application:
         self.uid = [None, None, None]
         self.get_board_info()
         self.get_sensor_information()
+
+        # Preview size : use default height, and compute width to respect the sensor aspect ratio. Align to a multiple of 8
+        self.preview_height = PREVIEW_HEIGHT
+        self.preview_width = self.preview_height * self.sensor_width / self.sensor_height
+        self.preview_width = round(self.preview_width / 8) * 8
 
         #instantiate IQtune communication protocol
         self.iqtune_com = IQTuneCom(self)
