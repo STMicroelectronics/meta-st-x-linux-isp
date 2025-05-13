@@ -31,7 +31,6 @@ Gtk.init_check(None)
 RESOURCES_DIRECTORY = os.path.abspath(os.path.dirname(__file__)) + "/resources/"
 
 # Static information about the preview size
-PREVIEW_WIDTH  = 640
 PREVIEW_HEIGHT = 480
 
 class GstWidget(Gtk.Box):
@@ -60,8 +59,8 @@ class GstWidget(Gtk.Box):
         if not self.libcamerasrc:
             raise Exception("Could not create Gstreamer camera source element")
 
-        #creation of the libcamerasrc caps for the 3 pipelines
-        caps = "video/x-raw,width=" + str(PREVIEW_WIDTH) + ",height=" + str(PREVIEW_HEIGHT) + ",format=RGB16"
+        #creation of the libcamerasrc caps
+        caps = "video/x-raw,width=" + str(self.app.preview_width) + ",height=" + str(self.app.preview_height) + ",format=RGB16"
         print("Main pipe configuration: ", caps)
         caps_src = Gst.Caps.from_string(caps)
 
@@ -237,6 +236,11 @@ class Application:
         self.sensor_gain_max = None
         self.get_sensor_information()
         self.get_display_resolution()
+
+        # Preview size : use default height, and compute width to respect the sensor aspect ratio. Align to a multiple of 8
+        self.preview_height = PREVIEW_HEIGHT
+        self.preview_width = self.preview_height * self.sensor_width / self.sensor_height
+        self.preview_width = round(self.preview_width / 8) * 8
 
         #instantiate the Gstreamer pipeline
         self.gst_widget = GstWidget(self)
