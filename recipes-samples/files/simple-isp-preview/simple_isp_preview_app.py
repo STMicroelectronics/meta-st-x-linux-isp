@@ -159,6 +159,12 @@ class MainWindow(Gtk.Window):
         """
         self.ui_icon_exit_size = '50'
 
+    def _exit_icon_cb(self,eventbox, event):
+        """
+        Exit callback to close application
+        """
+        self.app.exit_app()
+
     def _main_ui_creation(self):
         """
         Setup the Gtk UI of the main window
@@ -166,7 +172,6 @@ class MainWindow(Gtk.Window):
         # remove the title bar
         self.set_decorated(False)
 
-        self.first_drawing_call = True
         GdkDisplay = Gdk.Display.get_default()
         monitor = Gdk.Display.get_monitor(GdkDisplay, 0)
         workarea = Gdk.Monitor.get_workarea(monitor)
@@ -202,6 +207,7 @@ class MainWindow(Gtk.Window):
         self.exit_icon = Gtk.Image.new_from_file(self.exit_icon_path)
         self.exit_icon_event = Gtk.EventBox()
         self.exit_icon_event.add(self.exit_icon)
+        self.exit_icon_event.connect("button_press_event",self._exit_icon_cb)
         self.exit_box.pack_start(self.exit_icon_event,False,False,2)
 
         # setup main box which group the three previous boxes
@@ -212,153 +218,12 @@ class MainWindow(Gtk.Window):
         self.add(self.main_box)
         return True
 
-class OverlayWindow(Gtk.Window):
-    """
-    This class handles all the functions necessary
-    to display overlayed information on top of the
-    video stream
-    """
-    def __init__(self,app):
-        """
-        Setup instances of class and shared variables
-        usefull for the application
-        """
-        Gtk.Window.__init__(self)
-        self.app = app
-        self.decimation = 0
-        self.stat_area = [0, 0, 0, 0]
-        self._overlay_ui_creation()
-
-    def _set_ui_param(self):
-        """
-        Setup all the UI parameter
-        """
-        self.ui_icon_exit_size = '50'
-
-    def _exit_icon_cb(self,eventbox, event):
-        """
-        Exit callback to close application
-        """
-        self.app.exit_app()
-
-    def _overlay_ui_creation(self):
-        """
-        Setup the Gtk UI of the overlay window
-        """
-        # remove the title bar
-        self.set_decorated(False)
-
-        self.first_drawing_call = True
-        GdkDisplay = Gdk.Display.get_default()
-        monitor = Gdk.Display.get_monitor(GdkDisplay, 0)
-        workarea = Gdk.Monitor.get_workarea(monitor)
-
-        GdkScreen = Gdk.Screen.get_default()
-        provider = Gtk.CssProvider()
-        css_path = RESOURCES_DIRECTORY + "Default.css"
-        self.set_name("overlay_window")
-        provider.load_from_path(css_path)
-        Gtk.StyleContext.add_provider_for_screen(GdkScreen, provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
-        self.maximize()
-        self.screen_width = workarea.width
-        self.screen_height = workarea.height
-
-        self.set_position(Gtk.WindowPosition.CENTER)
-        self.connect('destroy', Gtk.main_quit)
-        self._set_ui_param()
-
-        # setup video box containing a transparent drawing area
-        # to draw over the video stream
-        self.video_box = Gtk.HBox()
-        self.video_box.set_name("gui_overlay_video")
-        self.video_box.set_app_paintable(True)
-        self.drawing_area = Gtk.DrawingArea()
-        self.drawing_area.connect("draw", self.drawing)
-        self.drawing_area.set_name("overlay_draw")
-        self.drawing_area.set_app_paintable(True)
-        self.video_box.pack_start(self.drawing_area, True, True, 0)
-
-        # setup the exit box which contains the exit button
-        self.exit_box = Gtk.VBox()
-        self.exit_box.set_name("gui_overlay_exit")
-        self.exit_icon_path = RESOURCES_DIRECTORY + 'exit_' + self.ui_icon_exit_size + 'x' +  self.ui_icon_exit_size + '.png'
-        self.exit_icon = Gtk.Image.new_from_file(self.exit_icon_path)
-        self.exit_icon_event = Gtk.EventBox()
-        self.exit_icon_event.add(self.exit_icon)
-        self.exit_icon_event.connect("button_press_event",self._exit_icon_cb)
-        self.exit_box.pack_start(self.exit_icon_event,False,False,2)
-
-        # setup main box which group the three previous boxes
-        self.main_box =  Gtk.HBox()
-        self.exit_box.set_name("gui_overlay")
-        self.main_box.pack_start(self.video_box,True,True,0)
-        self.main_box.pack_start(self.exit_box,False,False,0)
-        self.add(self.main_box)
-        return True
-
-    def drawing(self, widget, cr):
-        """
-        Drawing callback used to draw with cairo on
-        the drawing area
-        """
-        if self.app.first_drawing_call :
-            self.app.first_drawing_call = False
-            self.drawing_width = widget.get_allocated_width()
-            self.drawing_height = widget.get_allocated_height()
-            self.label_printed = True
-            # uncomment this line to display stat area
-            #GLib.idle_add(self.update_stat_area)
-
-            #adapt the drawing overlay depending on the image/camera stream displayed
-            preview_ratio = float(PREVIEW_WIDTH) / float(PREVIEW_HEIGHT)
-            self.preview_height = self.drawing_height
-            self.preview_width =  preview_ratio * self.preview_height
-            if self.preview_width >= self.drawing_width:
-                self.offset_x = 0
-                self.preview_width = self.drawing_width
-                self.preview_height = self.preview_width / preview_ratio
-                self.offset_y = (self.drawing_height - self.preview_height)/2
-            else :
-                self.offset_x = (self.drawing_width - self.preview_width)/2
-                self.offset_y = 0
-
-            return False
-
-        if self.decimation:
-            ratio_x = self.preview_width / self.app.sensor_width / self.decimation
-            ratio_y = self.preview_height / self.app.sensor_height / self.decimation
-            # Red dash line
-            cr.set_source_rgb(1.0, 0.0, 0.0)  # Red color
-            cr.set_dash([10.0, 5.0])  # 10 units dash, 5 units gap
-            cr.set_line_width(2.0)
-            # Draw the rectangle
-            cr.rectangle((self.stat_area[0] * ratio_x) + self.offset_x,
-                         (self.stat_area[1] * ratio_y) + self.offset_y,
-                         (self.stat_area[2] * ratio_x),
-                         (self.stat_area[3] * ratio_y))
-            cr.stroke()
-
-        return True
-
-    def update_stat_area(self):
-        # If new position of statistic area is detected then draw it on the overlay area
-        self.decimation = self.app.gst_widget.libcamerasrc.get_property('decimation-factor')
-        if self.decimation:
-            rectangle = self.app.gst_widget.libcamerasrc.get_property('statistic-area')
-            for elem1, elem2 in zip(rectangle, self.stat_area):
-                if elem1 != elem2:
-                    self.stat_area = rectangle
-                    self.app.update_ui()
-
-        return True
-
 class Application:
     """
     Class that handles the whole application
     """
     def __init__(self):
         #init variables uses :
-        self.first_drawing_call = True
         self.window_width = 0
         self.window_height = 0
         self.sensor_name = None
@@ -377,8 +242,6 @@ class Application:
         self.gst_widget = GstWidget(self)
         #instantiate the main window
         self.main_window = MainWindow(self)
-        #instantiate the overlay window
-        self.overlay_window = OverlayWindow(self)
         self.show_all()
 
     def get_sensor_information(self):
@@ -481,33 +344,16 @@ class Application:
         self.window_height = int(display_height)
         return 0
 
-    # Updating the labels and the inference infos displayed on the GUI interface - camera input
-    def update_statistic_area_overlay(self):
-        """
-        Updating the statistic area size and position
-        """
-        # TODO
-
-        return True
-
     def update_ui(self):
-        """
-        refresh overlay UI
-        """
-        self.update_statistic_area_overlay()
         self.main_window.queue_draw()
-        self.overlay_window.queue_draw()
 
     def show_all(self):
         self.main_window.connect("delete-event", Gtk.main_quit)
         self.main_window.show_all()
-        self.overlay_window.connect("delete-event", Gtk.main_quit)
-        self.overlay_window.show_all()
         return True
 
     def exit_app(self):
         self.main_window.destroy()
-        self.overlay_window.destroy()
         Gtk.main_quit()
         return False
 
