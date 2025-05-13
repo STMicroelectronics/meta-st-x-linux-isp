@@ -633,8 +633,13 @@ class IQTuneCom():
             read_values = read_values + pack('<I', False)
             # 04 - HasAntiFlicker. Not supported for the time being.
             read_values = read_values + pack('<I', True)
-            # 05 - DeviceId (N6=0x00  -  MP25=0x01 ...   0xFFFFFF = unknown)
-            device = 0x01 if self._app.device.startswith("STM32MP25") else 0xFFFFFFFF
+            # 05 - DeviceId (N6=0x00  -  MP25/23=0x01 - MP21=0x2 ...   0xFFFFFF = unknown)
+            if self._app.device.startswith("STM32MP25") or self._app.device.startswith("STM32MP23"):
+                device = 0x01
+            elif self._app.device.startswith("STM32MP21"):
+                device = 0x02
+            else:
+                device = 0xFFFFFFFF
             read_values = read_values + pack('<I', device)
             # 06 - UID
             read_values = read_values + self._app.uid[0] + self._app.uid[1] + self._app.uid[2]
