@@ -76,11 +76,20 @@ class IQTuneCom():
         ret = subprocess.run(cmd, shell=True)
         if ret.returncode != 0:
             print("Fail to disable ethernet usb gadget")
-        # Enable ACM gadget for USB serial communication and UVC gadget for UVC livepreview providing the targeted fps
-        cmd = 'su -c "stm32_usbotg_acm_uvc_config.sh restart ' + str(self._app.preview_width) + ' ' + str(self._app.preview_height) + ' ' + str(self._app.sensor_fps_max) + '"'
-        ret = subprocess.run(cmd, shell=True)
-        if ret.returncode != 0:
-            print("Fail to enable selrial usb gadget")
+        # If MP21 platform is detected, the UVC is not yet supported so only enable the ACM gadget for USB serial communication.
+        # Else enable ACM gadget for USB serial communication and UVC gadget for UVC livepreview providing the targeted width, height and fps of the UVC profile
+        if self._app.device.startswith("STM32MP21"):
+            cmd = 'su -c "stm32_usbotg_acm_config.sh restart"'
+            ret = subprocess.run(cmd, shell=True)
+            if ret.returncode != 0:
+                print("Fail to enable ACM usb gadget")
+                exit(1)
+        else:
+            cmd = 'su -c "stm32_usbotg_acm_uvc_config.sh restart ' + str(self._app.preview_width) + ' ' + str(self._app.preview_height) + ' ' + str(self._app.sensor_fps_max) + '"'
+            ret = subprocess.run(cmd, shell=True)
+            if ret.returncode != 0:
+                print("Fail to enable ACM and UVC usb gadgets")
+                exit(1)
 
     def __del__(self):
         self._close()
