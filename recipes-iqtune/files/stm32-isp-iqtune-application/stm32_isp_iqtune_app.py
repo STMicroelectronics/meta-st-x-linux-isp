@@ -54,7 +54,7 @@ class GstPipeline():
         self.dump_height = 0
         self.dump_pitch = 0
         self.dump_format = 0
-        self._uvc_video_dev = self._get_video_device_for_uvc()
+        self.uvc_video_dev = self._get_video_device_for_uvc()
         self.isp_first_config = True
         if self.app.headless:
             self._camera_pipeline_creation()
@@ -67,7 +67,7 @@ class GstPipeline():
         lines = result.stdout.splitlines()
         device_name = None
         for i, line in enumerate(lines):
-            if "dwc3-gadget" in line:
+            if "(gadget." in line:
                 # The next line should contain the device path
                 if i + 1 < len(lines):
                     device_name = lines[i + 1].strip()
@@ -110,11 +110,9 @@ class GstPipeline():
         queue0 = Gst.ElementFactory.make("queue", "queue0")
         queue1 = Gst.ElementFactory.make("queue", "queue1")
         queue2 = Gst.ElementFactory.make("queue", "queue2")
-        queue3 = Gst.ElementFactory.make("queue", "queue3")
 
         # creation of the videoconvert element
         videoconvert2 = Gst.ElementFactory.make("videoconvert", "convert2")
-        videoconvert3 = Gst.ElementFactory.make("videoconvert", "convert3")
 
         # creation and configuration of the appsink elements
         self.appsink0 = Gst.ElementFactory.make("appsink", "appsink0")
@@ -139,9 +137,14 @@ class GstPipeline():
         self.appsink2.connect("new-sample", self._new_sample_preview)
 
         # creation of the uvcsink element and configuration of the v4l2Sink element created by uvcsink
-        self.uvcsink = Gst.ElementFactory.make("uvcsink", "uvcsink")
-        v4l2sink = self.uvcsink.get_child_by_name("v4l2sink")
-        v4l2sink.set_property("device", self._uvc_video_dev)
+        if self.uvc_video_dev is not None:
+            uvcsink = Gst.ElementFactory.make("uvcsink", "uvcsink")
+            v4l2sink = uvcsink.get_child_by_name("v4l2sink")
+            v4l2sink.set_property("device", self.uvc_video_dev)
+            # creation of the videoconvert element for uvc pipeline branch
+            videoconvert3 = Gst.ElementFactory.make("videoconvert", "convert3")
+            # creation of the queue element for uvc pipeline branch
+            queue3 = Gst.ElementFactory.make("queue", "queue3")
 
         # creation of the tee element
         tee = Gst.ElementFactory.make("tee", "tee0")
@@ -160,7 +163,7 @@ class GstPipeline():
                 return False
 
         # Check if all elements were created
-        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, queue3, tee, videoconvert2, videoconvert3, pipelinesink, self.appsink0, self.appsink1, self.appsink2, self.uvcsink]):
+        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, tee, videoconvert2, pipelinesink, self.appsink0, self.appsink1, self.appsink2]):
             print("Not all elements could be created. Exiting.")
             return False
 
@@ -170,15 +173,23 @@ class GstPipeline():
         self.gst_pipeline.add(queue0)
         self.gst_pipeline.add(queue1)
         self.gst_pipeline.add(queue2)
-        self.gst_pipeline.add(queue3)
         self.gst_pipeline.add(tee)
         self.gst_pipeline.add(videoconvert2)
-        self.gst_pipeline.add(videoconvert3)
         self.gst_pipeline.add(pipelinesink)
         self.gst_pipeline.add(self.appsink0)
         self.gst_pipeline.add(self.appsink1)
         self.gst_pipeline.add(self.appsink2)
-        self.gst_pipeline.add(self.uvcsink)
+
+        # Check if all element for the uvc pipeline were created
+        if self.uvc_video_dev is not None:
+            if not all([queue3, videoconvert3, uvcsink]):
+                print("Not all elements could be created. Exiting.")
+                return False
+
+            # Add all elements to the pipeline for uvc
+            self.gst_pipeline.add(queue3)
+            self.gst_pipeline.add(videoconvert3)
+            self.gst_pipeline.add(uvcsink)
 
         # linking elements together
         #              | src_0 --------> queue0 [caps_src0] -> appsink0
@@ -193,11 +204,13 @@ class GstPipeline():
         queue.link_filtered(pipelinesink, caps_src)
         videoconvert2.link_filtered(self.appsink2, caps_src2)
         queue2.link(videoconvert2)
-        videoconvert3.link(self.uvcsink)
-        queue3.link(videoconvert3)
         tee.link(queue)
         tee.link(queue2)
-        tee.link(queue3)
+
+        if self.uvc_video_dev is not None:
+            videoconvert3.link(uvcsink)
+            queue3.link(videoconvert3)
+            tee.link(queue3)
 
         src_pad = self.libcamerasrc.get_static_pad("src")
         src_request_pad_template = self.libcamerasrc.get_pad_template("src_%u")

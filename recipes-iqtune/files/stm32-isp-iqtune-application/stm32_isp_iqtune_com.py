@@ -648,7 +648,11 @@ class IQTuneCom():
             # 08 - HasUniqueGamma.
             read_values = read_values + pack('<I', True)
             # 09 - HasUVC.
-            read_values = read_values + pack('<I', True)
+            # UVC is supported only if uvc_video_dev exists
+            if self._app.gst_widget.uvc_video_dev is not None:
+                read_values = read_values + pack('<I', True)
+            else:
+                read_values = read_values + pack('<I', False)
 
         else:
             print("Unkown get config command (" + str(cmd) + ")")
