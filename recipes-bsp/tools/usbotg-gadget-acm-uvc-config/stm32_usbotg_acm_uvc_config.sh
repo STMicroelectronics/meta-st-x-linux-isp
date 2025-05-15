@@ -178,6 +178,6 @@ case $1 in
         do_start
         ;;
     *)
-        echo "Usage: $0 <stop | start | restart> [fps]"
+        echo "Usage: $0 (stop | start | restart) [frame_width] [frame_height] [fps]"
         ;;
 esac
