@@ -15,6 +15,9 @@ import threading
 from struct import pack, unpack
 from enum import Enum
 
+# Define constants
+PACKET_SIZE = 512
+
 class CmdOperation(Enum):
   CMD_OP_SET           = 0x00
   CMD_OP_GET           = 0x01
@@ -110,10 +113,32 @@ class IQTuneCom():
         try:
             nb_bytes = self._ser.in_waiting
             if nb_bytes > 0:
+                # Get first packet
+                total_data = b''
                 data = self._ser.read(size=nb_bytes)
-                #print("get data nb_bytes=" + str(nb_bytes))
-                #print(data)
-                return data
+                total_data += data
+                # Check if the first packet is less than PACKET_SIZE
+                if len(total_data) < PACKET_SIZE:
+                    # Wait for the second packet
+                    timeout = 2
+                    start_time = time.time()
+                    while (time.time() - start_time) < timeout:
+                        nb_bytes = self._ser.in_waiting
+                        if nb_bytes > 0:
+                            # Read the second packet and append it to total_data
+                            data = self._ser.read(size=nb_bytes)
+                            total_data += data
+                            break
+
+                # Check if the total size is PACKET_SIZE
+                if len(total_data) != PACKET_SIZE:
+                    print(f"Warning: Total packet size is {len(total_data)} bytes, expected {PACKET_SIZE} bytes.")
+
+                # Debug: Print the number of bytes received and the data
+                #print("get data nb_bytes=" + str(len(total_data)))
+                #print(total_data)
+
+                return total_data
         except:
             # serial error detected
             if self._ser.is_open:
