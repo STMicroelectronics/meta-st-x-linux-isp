@@ -81,7 +81,7 @@ class IQTuneCom():
             print("Fail to disable ethernet usb gadget")
         # If MP21 platform is detected, the UVC is not yet supported so only enable the ACM gadget for USB serial communication.
         # Else enable ACM gadget for USB serial communication and UVC gadget for UVC livepreview providing the targeted width, height and fps of the UVC profile
-        if self._app.device.startswith("STM32MP21"):
+        if self._app.device.startswith("STM32MP21") or self._app.no_uvc:
             cmd = 'su -c "stm32_usbotg_acm_config.sh restart"'
             ret = subprocess.run(cmd, shell=True)
             if ret.returncode != 0:

@@ -614,6 +614,7 @@ class Application:
     """
     def __init__(self, args):
         self.headless = args.headless
+        self.no_uvc = args.no_uvc;
         #init variables uses :
         self.first_drawing_call = True
         self.sensor_name = None
@@ -837,6 +838,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--headless", default=False, action='store_true', help="Start the IQTune application without display")
+    parser.add_argument("--no-uvc", default=False, action='store_true', help="Start the IQTune application without USB Video streaming")
     args = parser.parse_args()
 
     # application initialisation
