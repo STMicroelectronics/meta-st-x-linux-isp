@@ -2,19 +2,22 @@
     <img width="720" src="https://raw.githubusercontent.com/STMicroelectronics/meta-st-x-linux-isp/master/x-linux-isp-logo.png">
 </p>
 
-X-LINUX-ISP version: v6.0.1
+X-LINUX-ISP version: v6.1.0
 
 ## Enhancements, new features
-* Support OpenSTLinux 6.0.2 (fix issue while applying Gstreamer patches)
-* Fix RAW Bayer format when dumping RAW Bayer frame
+* Support OpenSTLinux 6.1.0
+* Support new STM32MP215F-DK board
+* Support Gamma Control from STM32 ISP IQTune application
+* Support UVC camera feature on STM32MP25x for live streaming in STM32 ISP IQTune
+* Fix STM32 ISP IQTune application for MacOS support
 
 ## Limitation
 * None
 
 # Overview
 X-LINUX-ISP is a free of charge open-source software package providing ISP
-(Image Signal Processing) image quality software targeting the STM32MP25x series
-that embed an ISP camera pipeline called.<br>
+(Image Signal Processing) image quality software targeting the STM32MP25x and
+STM32MP21x series that embed an ISP camera pipeline.<br>
 It brings advanced image quality capabilities that allow developers working with
 OpenSTLinux to **create ISP-based application very easily.**
 * **Pre-integrated** into Linux distribution based on ST environment
@@ -33,12 +36,12 @@ OpenSTLinux to **create ISP-based application very easily.**
 # meta-st-x-linux-isp
 X-LINUX-ISP OpenEmbedded meta layer to be integrated into OpenSTLinux
 distribution. It contains recipes for ISP image quality software, tools and
-application examples for STM32MP25 series.
+application examples for STM32MP25x and STM32MP21x series.
 
 ## Compatibility
-The X-LINUX-ISP OpenSTLinux Expansion Package v6.0.1 is compatible with the
+The X-LINUX-ISP OpenSTLinux Expansion Package v6.1.0 is compatible with the
 Yocto Project™ build system Scarthgap. It is validated over the OpenSTLinux
-Distribution v6.0.x on STM32MP25x series.
+Distribution v6.1.x on STM32MP25x and STM32MP21x series.
 
 ## Versioning
 The major versioning of the X-LINUX-ISP OpenSTLinux Expansion Package is aligned
@@ -54,7 +57,7 @@ The X-LINUX-ISP generic versioning v**x**.**y**.**z** is built as follows:
   a backward compatible manner.
 
 ## Available frameworks and tools within the meta-layer
-[X-LINUX-ISP v6.0.1 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
+[X-LINUX-ISP v6.1.0 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
 * ISP software:
   * libcamera with the support of the DCMIPP ISP Image Processing Algorithm
     (IPA) integrating Auto Exposure (AE) and Auto White Balance (AWB) and all
