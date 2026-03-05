@@ -26,6 +26,5 @@ RDEPENDS:packagegroup-x-linux-isp-iqtune = " \
 
 SUMMARY:packagegroup-x-linux-isp-libcamera = "X-LINUX-ISP libcamera and application example components"
 RDEPENDS:packagegroup-x-linux-isp-libcamera = " \
-    simple-isp-preview-python \
     libcamera-stm32mp-gst (>=${LIBCAMERA_VERSION_MIN}) \
 "

@@ -1,4 +1,4 @@
-# Copyright (C) 2024, STMicroelectronics - All Rights Reserved
+# Copyright (C) 2026, STMicroelectronics - All Rights Reserved
 
 SUMMARY = "X-LINUX-ISP tool manager"
 DESCRIPTION = "X-LINUX-ISP is a free of charge open-source software \
