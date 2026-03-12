@@ -57,10 +57,20 @@ class CmdID(Enum):
   CMD_SENSORDELAYMEASURE  = 0x1B
   CMD_FIRMWARE_CONFIG     = 0x1C
   CMD_UNIQUE_GAMMA        = 0x1D
+  CMD_LUXREF              = 0x1E
+  CMD_AWBCOLORTEMP        = 0x1F
+  CMD_HOST_OS_TYPE        = 0x20
 #Application API commands for test purpose
   CMD_USER_EXPOSURETARGET = 0x80
   CMD_USER_LISTWBREFMODES = 0x81
   CMD_USER_WBREFMODE      = 0x82
+  CMD_USER_GETDECIMATION  = 0x83
+  CMD_USER_STATISTICAREA  = 0x84
+  CMD_USER_LUX            = 0x85
+# Frame data command
+  CMD_FRAMEDATA           = 0xFE
+# Metadata Output command
+  CMD_METADATA_OUTPUT     = 0xFF
 
 class IQTuneCom():
     """
@@ -73,6 +83,7 @@ class IQTuneCom():
         self._baudrate = 115200
         self._ser = None
         self._original_statistic_profile = None
+        self._ref_color_set = 0
 
         # Disable ethernet usb gadget if already set
         cmd = 'su -c "stm32_usbotg_eth_config.sh stop"'
@@ -208,7 +219,7 @@ class IQTuneCom():
                 self._app.gst_widget.set_libcamera_property('contrast-values', values)
             self._app.gst_widget.set_libcamera_property('contrast-enable', enable)
 
-        elif cmd == CmdID.CMD_STATISTICAREA.value:
+        elif cmd == CmdID.CMD_STATISTICAREA.value or cmd == CmdID.CMD_USER_STATISTICAREA.value:
             # retrieve values from the command
             values = unpack('<4I', data[4:20])
             self._app.gst_widget.set_libcamera_property('statistic-area', values)
@@ -296,6 +307,8 @@ class IQTuneCom():
                 self._app.gst_widget.set_libcamera_property('awb-algo-profile-isp-gains', ispGains)
                 ccmCoeffs = unpack('<45i', data[248:428]) # 5 CCM of 3x3 values of 4 bytes
                 self._app.gst_widget.set_libcamera_property('awb-algo-profile-ccms', ccmCoeffs)
+                refRGB = unpack('<15B', data[428:443]) # 5 rgb values of 1 byte per component
+                self._app.gst_widget.set_libcamera_property('awb-algo-profile-ref-rgb', refRGB)
             self._app.gst_widget.set_libcamera_property('awb-algo-enable', enable)
 
         elif cmd == CmdID.CMD_ISPGAINSTATIC.value:
@@ -334,6 +347,69 @@ class IQTuneCom():
             enable = data[4]
             self._app.gst_widget.set_libcamera_property('gamma-enable', enable)
 
+        elif cmd == CmdID.CMD_LUXREF.value:
+            HL_LuxRef, HL_Expo1, HL_Lum1, HL_Expo2, HL_Lum2 = unpack('<5I', data[4:24])
+            LL_LuxRef, LL_Expo1, LL_Lum1, LL_Expo2, LL_Lum2 = unpack('<5I', data[24:44])
+            CalibFactor = unpack('<1f', data[44:48])[0]
+            self._app.gst_widget.set_libcamera_property('lux-ref', (HL_LuxRef, LL_LuxRef))
+            self._app.gst_widget.set_libcamera_property('lux-ref-expo', (HL_Expo1, HL_Expo2, LL_Expo1, LL_Expo2))
+            self._app.gst_widget.set_libcamera_property('lux-ref-luma', (HL_Lum1, HL_Lum2, LL_Lum1, LL_Lum2))
+            self._app.gst_widget.set_libcamera_property('lux-ref-calib-factor', CalibFactor)
+
+        elif cmd == CmdID.CMD_HOST_OS_TYPE.value:
+            pass#don't care about host os
+
+        elif cmd == CmdID.CMD_USER_EXPOSURETARGET.value:
+            val = data[4]
+            # convert the exposure compensation enum into float value
+            if ctypes.c_int8(val).value == -4:
+                val = -2.0
+            elif ctypes.c_int8(val).value == -3:
+                val = -1.5
+            elif ctypes.c_int8(val).value == -2:
+                val = -1.0
+            elif ctypes.c_int8(val).value == -1:
+                val = -0.5
+            elif ctypes.c_int8(val).value == 0:
+                val = 0.0
+            elif ctypes.c_int8(val).value == 1:
+                val = 0.5
+            elif ctypes.c_int8(val).value == 2:
+                val = 1.0
+            elif ctypes.c_int8(val).value == 3:
+                val = 1.5
+            elif ctypes.c_int8(val).value == 4:
+                val = 2.0
+            self._app.gst_widget.set_libcamera_property('aec-algo-exposure-compensation', val)
+
+        elif cmd == CmdID.CMD_USER_WBREFMODE.value:
+            # retrieve values from the command
+            enable = data[4]
+            refColorTemp = unpack('<1I', data[8:12])[0]
+            # enable or disable awb
+            self._app.gst_widget.set_libcamera_property('awb-algo-enable', enable)
+            if not enable:
+                # implement it in the same way as n6 fw / may use AwbMode set to AwbCustom with AwbCustomColorTemperature
+                # but those controls are not implemented in gstreamer
+                refColorTemps = self._app.gst_widget.get_libcamera_property('awb-algo-profile-color-temps')
+                for (pos, c) in enumerate(refColorTemps):
+                    if c == refColorTemp:
+                        break
+                if pos == len(refColorTemps) or refColorTemp == 0:
+                    print("Unable to find profile with temp %d" % refColorTemp)
+                    ret = 1
+                else:
+                    ispGains = self._app.gst_widget.get_libcamera_property('awb-algo-profile-isp-gains')
+                    ccmCoeffs = self._app.gst_widget.get_libcamera_property('awb-algo-profile-ccms')
+                    gains = [ispGains[pos], ispGains[pos + 5], ispGains[pos + 10]]
+                    ccms = ccmCoeffs[pos * 9: pos * 9 + 9]
+                    # apply "isp-gain-enable" / "isp-gain-values" and "ccm-enable" / "ccm-values"
+                    self._app.gst_widget.set_libcamera_property('isp-gain-values', gains)
+                    self._app.gst_widget.set_libcamera_property('ccm-values', ccms)
+                    self._ref_color_set = refColorTemp
+            else:
+                self._ref_color_set = refColorTemp
+
         elif cmd == CmdID.CMD_SENSORTESTPATTERN.value:
             print("CMD_SENSORTESTPATTERN")
 
@@ -341,6 +417,9 @@ class IQTuneCom():
             # retrieve values from the command
             val = unpack('<1I', data[4:8])[0]
             self._app.gst_widget.set_libcamera_property('sensor-delay', val)
+
+        elif cmd == CmdID.CMD_METADATA_OUTPUT.value:
+            self._app.gst_widget.metadata_output = bool(data[4])
 
         else:
             print("Unkown set config command (" + str(cmd) + ")")
@@ -373,7 +452,7 @@ class IQTuneCom():
             # ex: media-ctl -d $media_dev --set-v4l2 "'dcmipp_main_isp':0[crop:(0,5)/1280x713]"
             ret = 1
 
-        elif cmd == CmdID.CMD_DECIMATION.value:
+        elif cmd == CmdID.CMD_DECIMATION.value or cmd == CmdID.CMD_USER_GETDECIMATION.value:
             val = self._app.gst_widget.get_libcamera_property('decimation-factor')
             read_values = pack('B', val)
 
@@ -392,7 +471,7 @@ class IQTuneCom():
             for val in values:
                 read_values = read_values + pack('<I', val)
 
-        elif cmd == CmdID.CMD_STATISTICAREA.value:
+        elif cmd == CmdID.CMD_STATISTICAREA.value or cmd == CmdID.CMD_USER_STATISTICAREA.value:
             values = self._app.gst_widget.get_libcamera_property('statistic-area')
             read_values = b''
             for val in values:
@@ -400,7 +479,8 @@ class IQTuneCom():
 
         elif cmd == CmdID.CMD_SENSORGAIN.value:
             val = self._app.gst_widget.get_libcamera_property('sensor-gain')
-            read_values = pack('<I', int(val * 1000)) # convert from dB to mdB
+            # Add 0.5 before rounding to be sure to return set value
+            read_values = pack('<I', int(val * 1000 + 0.5)) # convert from dB to mdB
 
         elif cmd == CmdID.CMD_SENSOREXPOSURE.value:
             val = self._app.gst_widget.get_libcamera_property('sensor-exposure')
@@ -468,6 +548,7 @@ class IQTuneCom():
             refColorTemps = self._app.gst_widget.get_libcamera_property('awb-algo-profile-color-temps')
             ispGains = self._app.gst_widget.get_libcamera_property('awb-algo-profile-isp-gains')
             ccmCoeffs = self._app.gst_widget.get_libcamera_property('awb-algo-profile-ccms')
+            refRGB = self._app.gst_widget.get_libcamera_property('awb-algo-profile-ref-rgb')
             read_values = pack('B', enable)
             for val in profileNames:
                 read_values = read_values + val.encode('utf-8') + b'\x00' * (32 - len(val)) # 32 bytes aligned
@@ -478,6 +559,10 @@ class IQTuneCom():
                 read_values = read_values + pack('<I', val)
             for val in ccmCoeffs:
                 read_values = read_values + pack('<i', val)
+            for val in refRGB:
+                read_values = read_values + pack('<B', val)
+            # padding byte
+            read_values = read_values + b'\x00';
 
         elif cmd == CmdID.CMD_AWBPROFILE.value:
             currentProfileName = self._app.gst_widget.get_libcamera_property('awb-current-profile-name')
@@ -612,6 +697,65 @@ class IQTuneCom():
             enable = self._app.gst_widget.get_libcamera_property('gamma-enable')
             read_values = pack('<I', enable)
 
+        elif cmd == CmdID.CMD_LUXREF.value:
+            HL_LuxRef, LL_LuxRef = self._app.gst_widget.get_libcamera_property('lux-ref')
+            HL_Expo1, HL_Expo2, LL_Expo1, LL_Expo2 = self._app.gst_widget.get_libcamera_property('lux-ref-expo')
+            HL_Lum1, HL_Lum2, LL_Lum1, LL_Lum2 = self._app.gst_widget.get_libcamera_property('lux-ref-luma')
+            CalibFactor = self._app.gst_widget.get_libcamera_property('lux-ref-calib-factor')
+            read_values = b''
+            for val in (HL_LuxRef, HL_Expo1, HL_Lum1, HL_Expo2, HL_Lum2):
+                read_values = read_values + pack('<I', val)
+            for val in (LL_LuxRef, LL_Expo1, LL_Lum1, LL_Expo2, LL_Lum2):
+                read_values = read_values + pack('<I', val)
+            read_values = read_values + pack('<f', CalibFactor)
+
+        elif cmd == CmdID.CMD_AWBCOLORTEMP.value:
+            enable = self._app.gst_widget.get_libcamera_property('awb-algo-enable')
+            if enable:
+                val = self._app.gst_widget.get_libcamera_property('awb-current-profile-color-temp')
+            else:
+                val = 0
+            read_values = pack('<I', val)
+
+        elif cmd == CmdID.CMD_USER_EXPOSURETARGET.value:
+            expval = self._app.gst_widget.get_libcamera_property('aec-algo-exposure-compensation')
+            exptarget = self._app.gst_widget.get_libcamera_property('aec-algo-exposure-target')
+            # convert float value to exposure compensation enum value
+            if expval == -2.0:
+                expval = -4
+            elif expval == -1.5:
+                expval = -3
+            elif expval == -1.0:
+                expval = -2
+            elif expval == -0.5:
+                expval = -1
+            elif expval == 0.0:
+                expval = 0
+            elif expval == 0.5:
+                expval = 1
+            elif expval == 1.0:
+                expval = 2
+            elif expval == 1.5:
+                expval = 3
+            elif expval == 2.0:
+                expval = 4
+            read_values = b''
+            read_values = pack('<b', expval)
+            read_values = read_values + b'\x00' * 3 #keep struct align
+            read_values = read_values + pack('<I', exptarget)
+
+        elif cmd == CmdID.CMD_USER_LISTWBREFMODES.value:
+            refColorTemps = self._app.gst_widget.get_libcamera_property('awb-algo-profile-color-temps')
+            read_values = b''
+            for val in refColorTemps:
+                read_values = read_values + pack('<I', val)
+
+        elif cmd == CmdID.CMD_USER_WBREFMODE.value:
+            enable = self._app.gst_widget.get_libcamera_property('awb-algo-enable')
+            read_values = pack('<B', enable)
+            read_values = read_values + b'\x00' * 3 # padding to keep c-type structure aligned
+            read_values = read_values + pack('<I', self._ref_color_set)
+
         elif cmd == CmdID.CMD_SENSORINFO.value:
             read_values = b''
             read_values = read_values + self._app.sensor_name.encode('utf-8') + b'\x00' * (32 - len(self._app.sensor_name)) # 32 bytes aligned
@@ -656,7 +800,7 @@ class IQTuneCom():
         elif cmd == CmdID.CMD_FIRMWARE_CONFIG.value:
             read_values = b''
             # Number of supported fields (RGBOrder, HasStatRemoval, etc..).
-            nb_field = 9
+            nb_field = 10
             read_values = read_values + pack('<I', nb_field)
             # 01 - RGBOrder (RGB = 0x00 (From DV6) -  BGR = 0x01 (DV5))
             rgb_order = 0x01 if self._app.ostl_version == "5.0" else 0x00
@@ -687,6 +831,29 @@ class IQTuneCom():
                 read_values = read_values + pack('<I', True)
             else:
                 read_values = read_values + pack('<I', False)
+            # 0A - HasSTAlgo.
+            read_values = read_values + pack('<I', True)
+
+        elif cmd == CmdID.CMD_USER_LUX.value:
+            lux_estimate = self._app.gst_widget.get_libcamera_property('lux-estimate')
+            read_values = pack('<I', int(lux_estimate))
+
+        elif cmd == CmdID.CMD_FRAMEDATA.value:
+            expo_us = self._app.gst_widget.get_libcamera_property('sensor-exposure')
+            gain_db = self._app.gst_widget.get_libcamera_property('sensor-gain')
+            lux_estimate = self._app.gst_widget.get_libcamera_property('lux-estimate')
+            read_values = b''
+            read_values = read_values + pack('<I', expo_us)
+            read_values = read_values + pack('<I', int(gain_db * 1000))
+            read_values = read_values + pack('<I', int(lux_estimate))
+            if self._app.gst_widget.get_libcamera_property('awb-algo-enable'):
+                colortemp = self._app.gst_widget.get_libcamera_property('awb-current-profile-color-temp')
+            else:
+                colortemp = 0
+            read_values = read_values + pack('<I', colortemp)
+
+        elif cmd == CmdID.CMD_METADATA_OUTPUT.value:
+            read_values = pack('<I', self._app.gst_widget.metadata_output)
 
         else:
             print("Unkown get config command (" + str(cmd) + ")")

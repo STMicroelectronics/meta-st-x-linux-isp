@@ -45,6 +45,8 @@ class GstPipeline():
     def __init__(self, app):
         self.instant_fps = 0
         self.app = app
+        self.metadata_output = False
+        self.metadata_output_cnt = 0
         self.dump_rgb = False
         self.dump_raw = False
         self.dump_preview = False
@@ -334,6 +336,18 @@ class GstPipeline():
         """
         recover preview frame
         """
+
+        if self.metadata_output:
+            avg_values = self.app.gst_widget.get_libcamera_property('statistic-get-average-down')
+            exptarget = self.app.gst_widget.get_libcamera_property('aec-algo-exposure-target')
+            expo_us = self.app.gst_widget.get_libcamera_property('sensor-exposure')
+            gain_db = self.app.gst_widget.get_libcamera_property('sensor-gain')
+            colortemp = self.app.gst_widget.get_libcamera_property('awb-current-profile-color-temp')
+            lux_estimate = self.app.gst_widget.get_libcamera_property('lux-estimate')
+            print("Meta[%d]: L = %d, TG = %d, G = %d, E = %d, CT = %d, LUX = %d" %
+                  (self.metadata_output_cnt, avg_values[3], exptarget, int(gain_db * 1000), expo_us, colortemp, int(lux_estimate)))
+            self.metadata_output_cnt += 1
+
         if self.dump_preview == True:
             self.dump_buffer = None
             self.dump_size = 0
