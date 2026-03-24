@@ -91,7 +91,7 @@ class GstPipeline():
             raise Exception("Could not create Gstreamer camera source element")
 
         #creation of the libcamerasrc caps for the 3 pipelines
-        caps = "video/x-raw,width=" + str(self.app.preview_width) + ",height=" + str(self.app.preview_height) + ",format=RGB16"
+        caps = "video/x-raw,width=" + str(self.app.preview_width) + ",height=" + str(self.app.preview_height) + ",format=YUY2" + ",interlace-mode=progressive"
         print("Main pipe configuration: ", caps)
         caps_src = Gst.Caps.from_string(caps)
 
@@ -143,8 +143,7 @@ class GstPipeline():
             uvcsink = Gst.ElementFactory.make("uvcsink", "uvcsink")
             v4l2sink = uvcsink.get_child_by_name("v4l2sink")
             v4l2sink.set_property("device", self.uvc_video_dev)
-            # creation of the videoconvert element for uvc pipeline branch
-            videoconvert3 = Gst.ElementFactory.make("videoconvert", "convert3")
+            v4l2sink.set_property("io-mode", "GST_V4L2_IO_DMABUF_IMPORT")
             # creation of the queue element for uvc pipeline branch
             queue3 = Gst.ElementFactory.make("queue", "queue3")
 
@@ -184,34 +183,32 @@ class GstPipeline():
 
         # Check if all element for the uvc pipeline were created
         if self.uvc_video_dev is not None:
-            if not all([queue3, videoconvert3, uvcsink]):
+            if not all([queue3, uvcsink]):
                 print("Not all elements could be created. Exiting.")
                 return False
 
             # Add all elements to the pipeline for uvc
             self.gst_pipeline.add(queue3)
-            self.gst_pipeline.add(videoconvert3)
             self.gst_pipeline.add(uvcsink)
 
         # linking elements together
         #              | src_0 --------> queue0 [caps_src0] -> appsink0
         #              | src_1 --------> queue1 [caps_src1] -> appsink1
         # libcamerasrc |
-        #              |              -> queue  [caps_src] --> gtkwaylandsink (or fakesink)
-        #              | src   -> tee -> queue2 -------------> videoconvert2 [caps_src2] -> appsink2 (genuine livefeedback)
-        #                             -> queue3 -------------> videoconvert3 -> uvcsink (UVC streaming using v4l2sink)
+        #              |                       -> queue -----> gtkwaylandsink (or fakesink)
+        #              | src [caps_src] -> tee -> queue2 ----> videoconvert2 [caps_src2] -> appsink2 (genuine livefeedback)
+        #                                      -> queue3 ----> uvcsink (UVC streaming using v4l2sink)
         queue0.link_filtered(self.appsink0, caps_src0)
         queue1.link_filtered(self.appsink1, caps_src1)
 
-        queue.link_filtered(pipelinesink, caps_src)
+        queue.link(pipelinesink)
         videoconvert2.link_filtered(self.appsink2, caps_src2)
         queue2.link(videoconvert2)
         tee.link(queue)
         tee.link(queue2)
 
         if self.uvc_video_dev is not None:
-            videoconvert3.link(uvcsink)
-            queue3.link(videoconvert3)
+            queue3.link(uvcsink)
             tee.link(queue3)
 
         src_pad = self.libcamerasrc.get_static_pad("src")
@@ -222,14 +219,14 @@ class GstPipeline():
         queue0_sink_pad = queue0.get_static_pad("sink")
         queue1_sink_pad = queue1.get_static_pad("sink")
 
-        # view-finder
-        src_pad.set_property("stream-role", 3)
         # still-capture
-        src_request_pad0.set_property("stream-role", 1)
+        src_pad.set_property("stream-role", 1)
+        # view-finder
+        src_request_pad0.set_property("stream-role", 3)
         # raw
         src_request_pad1.set_property("stream-role", 0)
 
-        src_pad.link(tee_sink_pad)
+        self.libcamerasrc.link_filtered(tee, caps_src)
         src_request_pad0.link(queue0_sink_pad)
         src_request_pad1.link(queue1_sink_pad)
 
