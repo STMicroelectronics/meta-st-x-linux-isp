@@ -1,0 +1,31 @@
+From ec95cd822c1b68334aadb2af4507e544f43a537f Mon Sep 17 00:00:00 2001
+From: Michael Grzeschik <m.grzeschik@pengutronix.de>
+Date: Sat, 21 Sep 2024 00:53:11 +0200
+Subject: [PATCH] uvcgadget: always ensure to switch to fakesink
+
+In the case we transition the uvcsink to toggle between ready and
+playing we have to ensure to always switch between fakesink and
+v4l2sink.
+
+Using the already linked v4l2sink a second time does curr ntly not work
+when we restart the stream and therefor switch to streaming again.
+
+Part-of: <https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/7574>
+
+Upstream-Status: Backport
+---
+ sys/uvcgadget/gstuvcsink.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/sys/uvcgadget/gstuvcsink.c b/sys/uvcgadget/gstuvcsink.c
+index c052682..bfbcfdf 100644
+--- a/sys/uvcgadget/gstuvcsink.c
++++ b/sys/uvcgadget/gstuvcsink.c
+@@ -1070,6 +1070,7 @@ gst_uvc_sink_change_state (GstElement * element, GstStateChange transition)
+ 
+   switch (transition) {
+     case GST_STATE_CHANGE_PAUSED_TO_READY:
++      gst_uvc_sink_to_fakesink (self);
+       break;
+     case GST_STATE_CHANGE_NULL_TO_READY:
+       if (!gst_uvc_sink_watch (self))
