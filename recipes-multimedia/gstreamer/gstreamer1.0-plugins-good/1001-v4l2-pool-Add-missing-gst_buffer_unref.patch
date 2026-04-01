@@ -1,0 +1,29 @@
+From fb54a494efa2965e892beda3449b28843b88d84b Mon Sep 17 00:00:00 2001
+From: Mickael Guene <mickael.guene@st.com>
+Date: Tue, 31 Mar 2026 10:51:43 +0200
+Subject: [PATCH] v4l2: pool: Add missing gst_buffer_unref()
+
+In case of error on gst_v4l2_buffer_pool_qbuf(), there is a missing call
+to gst_buffer_unref(). This result in buffer leak.
+
+Upstream-Status: Pending
+---
+ sys/v4l2/gstv4l2bufferpool.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/sys/v4l2/gstv4l2bufferpool.c b/sys/v4l2/gstv4l2bufferpool.c
+index 58c2099..d065472 100644
+--- a/sys/v4l2/gstv4l2bufferpool.c
++++ b/sys/v4l2/gstv4l2bufferpool.c
+@@ -2102,8 +2102,10 @@ gst_v4l2_buffer_pool_process (GstV4l2BufferPool * pool, GstBuffer ** buf,
+           if ((ret =
+                   gst_v4l2_buffer_pool_qbuf (pool, to_queue, group,
+                       frame_number))
+-              != GST_FLOW_OK)
++              != GST_FLOW_OK) {
++            gst_buffer_unref (to_queue);
+             goto queue_failed;
++          }
+ 
+           /* if we are not streaming yet (this is the first buffer, start
+            * streaming now */
