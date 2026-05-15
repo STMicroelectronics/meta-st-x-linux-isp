@@ -21,10 +21,10 @@ RDEPENDS:packagegroup-x-linux-isp = "   \
 SUMMARY:packagegroup-x-linux-isp-iqtune = "X-LINUX-ISP IQTune application components"
 RDEPENDS:packagegroup-x-linux-isp-iqtune = " \
     stm32-isp-iqtune-application-python \
-    libcamera-stm32mp-gst (>=${LIBCAMERA_VERSION_MIN}) \
+    libcamera-stm32mp-gst \
 "
 
 SUMMARY:packagegroup-x-linux-isp-libcamera = "X-LINUX-ISP libcamera and application example components"
 RDEPENDS:packagegroup-x-linux-isp-libcamera = " \
-    libcamera-stm32mp-gst (>=${LIBCAMERA_VERSION_MIN}) \
+    libcamera-stm32mp-gst \
 "
