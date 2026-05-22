@@ -704,7 +704,7 @@ class Application:
 
     def get_sensor_information(self):
         tmp_file = "/tmp/sensor_info.txt"
-        cmd = "cam -c1 -C15 --list-controls --list-properties --meta >> " + tmp_file
+        cmd = "cam -c1 -C15 --list-controls --list-properties --meta -s role=raw -s role=viewfinder >> " + tmp_file
         subprocess.run(cmd, shell=True)
 
         # Check if /tmp/sensor_info.txt file exists
