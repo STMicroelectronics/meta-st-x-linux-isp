@@ -2,14 +2,12 @@
     <img width="720" src="https://raw.githubusercontent.com/STMicroelectronics/meta-st-x-linux-isp/master/x-linux-isp-logo.png">
 </p>
 
-X-LINUX-ISP version: v6.1.0
+X-LINUX-ISP version: v6.2.0
 
 ## Enhancements, new features
-* Support OpenSTLinux 6.1.0
-* Support new STM32MP215F-DK board
-* Support Gamma Control from STM32 ISP IQTune application
-* Support UVC camera feature on STM32MP25x for live streaming in STM32 ISP IQTune
-* Fix STM32 ISP IQTune application for MacOS support
+* Support OpenSTLinux 6.2.1
+* Support ST 2A algorithms offering improved accuracy and stability
+* New lux estimation service
 
 ## Limitation
 * None
@@ -39,9 +37,9 @@ distribution. It contains recipes for ISP image quality software, tools and
 application examples for STM32MP25x and STM32MP21x series.
 
 ## Compatibility
-The X-LINUX-ISP OpenSTLinux Expansion Package v6.1.0 is compatible with the
+The X-LINUX-ISP OpenSTLinux Expansion Package v6.2.0 is compatible with the
 Yocto Project™ build system Scarthgap. It is validated over the OpenSTLinux
-Distribution v6.1.x on STM32MP25x and STM32MP21x series.
+Distribution v6.2.x on STM32MP25x and STM32MP21x series.
 
 ## Versioning
 The major versioning of the X-LINUX-ISP OpenSTLinux Expansion Package is aligned
@@ -57,17 +55,12 @@ The X-LINUX-ISP generic versioning v**x**.**y**.**z** is built as follows:
   a backward compatible manner.
 
 ## Available frameworks and tools within the meta-layer
-[X-LINUX-ISP v6.1.0 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
+[X-LINUX-ISP v6.2.0 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
 * ISP software:
   * libcamera with the support of the DCMIPP ISP Image Processing Algorithm
     (IPA) integrating Auto Exposure (AE) and Auto White Balance (AWB) and all
     ISP controls
   * libcamerasrc gstreamer plugin supporting DCMIPP ISP properties
-
-* Application examples:
-  * Simple ISP preview :
-    * Python™ example taking advantage of libcamera and libcamerasrc gstreamer
-      plugin for easy prototyping
 
 * Utilities:
   * X-LINUX-ISP tool suite provides tools for software information and ISP
@@ -90,4 +83,3 @@ The X-LINUX-ISP generic versioning v**x**.**y**.**z** is built as follows:
 
 ## STM32 ISP tuning procedure
 <https://wiki.st.com/stm32mpu/wiki/How_to_tune_ISP_using_the_STM32_ISP_IQTune>
-
