@@ -115,6 +115,7 @@ class GstPipeline():
 
         # creation of the videoconvert element
         videoconvert2 = Gst.ElementFactory.make("videoconvert", "convert2")
+        videoconvert3 = Gst.ElementFactory.make("videoconvert", "convert3")
 
         # creation and configuration of the appsink elements
         self.appsink0 = Gst.ElementFactory.make("appsink", "appsink0")
@@ -164,7 +165,7 @@ class GstPipeline():
                 return False
 
         # Check if all elements were created
-        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, tee, videoconvert2, pipelinesink, self.appsink0, self.appsink1, self.appsink2]):
+        if not all([self.gst_pipeline, self.libcamerasrc, queue, queue0, queue1, queue2, tee, videoconvert2, videoconvert3, pipelinesink, self.appsink0, self.appsink1, self.appsink2]):
             print("Not all elements could be created. Exiting.")
             return False
 
@@ -176,6 +177,7 @@ class GstPipeline():
         self.gst_pipeline.add(queue2)
         self.gst_pipeline.add(tee)
         self.gst_pipeline.add(videoconvert2)
+        self.gst_pipeline.add(videoconvert3)
         self.gst_pipeline.add(pipelinesink)
         self.gst_pipeline.add(self.appsink0)
         self.gst_pipeline.add(self.appsink1)
@@ -195,13 +197,14 @@ class GstPipeline():
         #              | src_0 --------> queue0 [caps_src0] -> appsink0
         #              | src_1 --------> queue1 [caps_src1] -> appsink1
         # libcamerasrc |
-        #              |                       -> queue -----> gtkwaylandsink (or fakesink)
+        #              |                       -> queue -----> videoconvert3 -> gtkwaylandsink (or fakesink)
         #              | src [caps_src] -> tee -> queue2 ----> videoconvert2 [caps_src2] -> appsink2 (genuine livefeedback)
         #                                      -> queue3 ----> uvcsink (UVC streaming using v4l2sink)
         queue0.link_filtered(self.appsink0, caps_src0)
         queue1.link_filtered(self.appsink1, caps_src1)
 
-        queue.link(pipelinesink)
+        videoconvert3.link(pipelinesink)
+        queue.link(videoconvert3)
         videoconvert2.link_filtered(self.appsink2, caps_src2)
         queue2.link(videoconvert2)
         tee.link(queue)
