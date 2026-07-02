@@ -13,33 +13,22 @@ X-LINUX-ISP version: v6.2.0
 * None
 
 # Overview
-X-LINUX-ISP is a free of charge open-source software package providing ISP
-(Image Signal Processing) image quality software targeting the STM32MP25x and
-STM32MP21x series that embed an ISP camera pipeline.<br>
-It brings advanced image quality capabilities that allow developers working with
-OpenSTLinux to **create ISP-based application very easily.**
-* **Pre-integrated** into Linux distribution based on ST environment
-* include **libcamera** with the support of the DCMIPP ISP Image Processing
-  Algorithm (IPA) integrating **Auto Exposure (AE)** and **Auto White Balance
-  (AWB)** and all ISP controls
-* include **libcamerasrc gstreamer plugin** supporting DCMIPP ISP properties
-* include **Sensor tuning application** (running on the target) that allows to
-  interact with the **STM32 ISP IQTune desktop application** executed on the
-  host computer (connected through USB) allowing to access ISP configuration and
-  perform a sensor tuning procedure
-* include **Simple ISP preview application example** taking advantage of
-  libcamera and libcamerasrc gstreamer plugin for easy prototyping.
-* Delivered under **GitHub as a Yocto meta-layer**
+X-LINUX-ISP is a free of charge open-source software package targeting the
+STM32MP25x and STM32MP21x series that embed an ISP camera pipeline.<br>
+This meta-layer delivers the **STM32 ISP IQTune application** running on the
+target to interact with the **STM32 ISP IQTune desktop application**
+executed on the host computer (connected through USB), allowing access to the
+ISP configuration and sensor tuning procedure.
 
 # meta-st-x-linux-isp
 X-LINUX-ISP OpenEmbedded meta layer to be integrated into OpenSTLinux
-distribution. It contains recipes for ISP image quality software, tools and
-application examples for STM32MP25x and STM32MP21x series.
+distribution. It contains recipes for STM32 ISP IQTune embedded application
+and its dependencies for STM32MP25x and STM32MP21x series.
 
 ## Compatibility
 The X-LINUX-ISP OpenSTLinux Expansion Package v6.2.0 is compatible with the
 Yocto Project™ build system Scarthgap. It is validated over the OpenSTLinux
-Distribution v6.2.x on STM32MP25x and STM32MP21x series.
+Distribution v6.2.1 on STM32MP25x and STM32MP21x series.
 
 ## Versioning
 The major versioning of the X-LINUX-ISP OpenSTLinux Expansion Package is aligned
@@ -57,16 +46,12 @@ The X-LINUX-ISP generic versioning v**x**.**y**.**z** is built as follows:
 ## Available frameworks and tools within the meta-layer
 [X-LINUX-ISP v6.2.0 expansion package](https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package):
 * ISP software:
-  * libcamera with the support of the DCMIPP ISP Image Processing Algorithm
-    (IPA) integrating Auto Exposure (AE) and Auto White Balance (AWB) and all
-    ISP controls
-  * libcamerasrc gstreamer plugin supporting DCMIPP ISP properties
+  * ISP software framework is now part of OpenSTLinux 6.2.1 distribution
+  (not delivered within x-linux-isp expansion package)
 
 * Utilities:
-  * X-LINUX-ISP tool suite provides tools for software information and ISP
-    packages management.
   * STM32 ISP IQTune application (running on the target) used to tune the ISP
-    by providing communication services between the host and the device
+  by providing communication services between the host and the device
 
 * Host tools:
   * STM32 ISP IQTune desktop application that provide services to tune the ISP
