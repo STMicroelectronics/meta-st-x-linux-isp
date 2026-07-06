@@ -18,7 +18,7 @@ SRC_URI = " file://x-linux-isp-tool/LICENSE \
             file://x-linux-isp-tool/Makefile \
 "
 
-PV = "${@d.expand('${ST_OSTL_COMPATIBILITY_VERSION_st-openstlinux}').partition('-')[0] or '0.0'}"
+PV = "${@d.expand('${ST_OSTL_COMPATIBILITY_VERSION_x-linux-isp}').partition('-')[0] or '0.0'}"
 
 BBCLASSEXTEND = " nativesdk "
 
