@@ -29,10 +29,7 @@ do_configure() {
     xpkg_ver=$(sed -n 's/^.*X-LINUX-ISP version: //p' README_sym)
 
     # Get software
-    xpkg_soft=$(sed -n '/^* ISP software:/,/^* Application examples:/{/^* Application examples:/!p}' README_sym | sed '$d' | sed '1d; $!s/$/ \\n \\/')
-
-    # Get applications
-    xpkg_app=$(sed -n '/^* Application examples:/,/^* Utilities:/{/^* Utilities:/!p}' README_sym | sed '$d' | sed '1d; $!s/$/ \\n \\/')
+    xpkg_soft=$(sed -n '/^* ISP software:/,/^* Utilities:/{/^* Utilities:/!p}' README_sym | sed '$d' | sed '1d; $!s/$/ \\n \\/')
 
     # Get utilities
     xpkg_util=$(sed -n '/^* Utilities:/,/^* Host tools:/{/^* Host tools:/!p}' README_sym | sed '$d' | sed '1d; $!s/$/ \\n \\/')
@@ -45,7 +42,6 @@ do_configure() {
 #include <iostream>
 const std::string README_VERSION = "${xpkg_ver}";
 const std::string README_SOFTWARE = "${xpkg_soft}";
-const std::string README_APPLI = "${xpkg_app}";
 const std::string README_UTILITIES = "${xpkg_util}";
 const std::string WIKI_LINK = "${xpkg_link}";
 EOF

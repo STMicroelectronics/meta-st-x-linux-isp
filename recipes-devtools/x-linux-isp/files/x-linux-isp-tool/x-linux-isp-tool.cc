@@ -32,7 +32,6 @@ bool version = false;
 bool features = false;
 
 extern const std::string WIKI_LINK;
-extern const std::string README_APPLI;
 extern const std::string README_UTILITIES;
 extern const std::string README_VERSION;
 extern const std::string README_SOFTWARE;
@@ -255,7 +254,6 @@ int main(int argc, char *argv[])
     }
     else if (features) {
         std::cout << "\nISP software:\n " << README_SOFTWARE << std::endl;
-        std::cout << "\nApplication examples:\n " << README_APPLI << "\n" << std::endl;
         std::cout << "\nUtilities:\n " << README_UTILITIES << "\n" << std::endl;
         std::cout << "\nFind more information on the wiki page: https://wiki.st.com/stm32mpu/wiki/Category:X-LINUX-ISP_expansion_package" << std::endl;
         return 0;
@@ -285,7 +283,6 @@ int main(int argc, char *argv[])
     /* Close the command stream */
     pclose(fp);
 
-
     /* Get list of ISP packages */
     /* 2 search paths to get the list of ISP packages: the official path and citool path */
     std::vector<std::string> directories = {
@@ -313,23 +310,6 @@ int main(int argc, char *argv[])
     }
     else if (to_install && argc == 3) {
         manage_pkgs(argc, argv,true);
-        /* If stm32-isp-iqtune-application-python is not marked as installed then force the kernel module to be reloaded */
-        if (!_is_package_in_list(installedPackages, "stm32-isp-iqtune-application-python")) {
-            std::cout << "\nKernel module videobuf2_dma_sg need to be reloaded: reload on going... " << std::endl;
-            if (system("modprobe -r usb_f_uvc")) {
-                std::cout << "Fail to upgrade the kernel module. Please reset your platform." << std::endl;
-                return 0;
-            }
-            if (system("modprobe -r videobuf2_dma_sg")) {
-                std::cout << "Fail to upgrade the kernel module. Please reset your platform." << std::endl;
-                return 0;
-            }
-            if (system("modprobe usb_f_uvc")) {
-                std::cout << "Fail to upgrade the kernel module. Please reset your platform." << std::endl;
-                return 0;
-            }
-            std::cout << "\nKernel module videobuf2_dma_sg reload successfully done." << std::endl;
-        }
     }
     else if (to_remove && argc == 3) {
         manage_pkgs(argc, argv,false);
